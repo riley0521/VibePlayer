@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="vibe_player" translatable="false">VibePlayer</string>
+    <string name="clear_search">Clear search</string>
+    <string name="navigate_back">Back</string>
+</resources>

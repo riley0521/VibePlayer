@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- For XML themes and drawables (splash, launcher, logo). Compose reads the tokens in theme/Color.kt. -->
+    <color name="vibe_surface_bg">#FF0A131D</color>
+    <color name="vibe_accent">#FFF1FF95</color>
+</resources>

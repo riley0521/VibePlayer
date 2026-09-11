@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Figma icon/linear/x: a 1.5-stroke plus rotated 45deg around the center of the 16x16 frame. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="16dp"
+    android:height="16dp"
+    android:viewportWidth="16"
+    android:viewportHeight="16">
+    <group
+        android:pivotX="8"
+        android:pivotY="8"
+        android:rotation="45">
+        <group
+            android:translateX="2.58333"
+            android:translateY="2.58333">
+            <path
+                android:pathData="M0.75,5.41667H5.41667M5.41667,5.41667H10.0833M5.41667,5.41667V10.0833M5.41667,5.41667V0.75"
+                android:strokeColor="#FF000000"
+                android:strokeLineCap="round"
+                android:strokeWidth="1.5" />
+        </group>
+    </group>
+</vector>

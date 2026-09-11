@@ -1,15 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The 72-unit logo scaled to 54dp and centered, so the glyph stays inside the 66dp safe zone. -->
+<!-- Splash icon canvas is 288dp (content kept inside a 192dp circle); the 72dp logo sits centered, as in Figma. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp"
-    android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
+    android:width="288dp"
+    android:height="288dp"
+    android:viewportWidth="288"
+    android:viewportHeight="288">
     <group
-        android:scaleX="0.75"
-        android:scaleY="0.75"
-        android:translateX="27"
-        android:translateY="27">
+        android:translateX="108"
+        android:translateY="108">
         <path
             android:fillColor="@color/vibe_accent"
             android:pathData="M30.27,35.889L58.092,25.893V42.513C56.3478,41.5158 54.3711,40.9973 52.362,41.01C46.488,41.01 41.727,45.288 41.727,50.565C41.727,55.842 46.488,60.12 52.362,60.12C58.239,60.12 63,55.842 63,50.565V22.476C63,19.116 63,16.299 62.736,14.055C62.6999,13.7441 62.6569,13.434 62.607,13.125C62.355,11.595 61.905,10.161 61.041,8.967C60.5022,8.21465 59.8113,7.58401 59.013,7.116L58.986,7.101C56.673,5.718 54.069,5.817 51.39,6.429C48.798,7.023 45.582,8.229 41.64,9.714L34.788,12.291C32.943,12.984 31.377,13.572 30.147,14.181C28.842,14.829 27.717,15.594 26.871,16.734C26.028,17.874 25.677,19.104 25.515,20.436C25.365,21.69 25.365,23.214 25.365,25.011V48.393C23.6208,47.3958 21.6441,46.8773 19.635,46.89C13.761,46.89 9,51.168 9,56.445C9,61.722 13.761,66 19.635,66C25.512,66 30.273,61.722 30.273,56.445L30.27,35.889Z" />
