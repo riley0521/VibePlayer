@@ -1,6 +1,7 @@
 package com.rfcoding.vibeplayer.core.designsystem.components
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
@@ -28,11 +29,13 @@ import com.rfcoding.vibeplayer.core.designsystem.theme.bodyLargeMedium
 
 /**
  * Figma nav-bar `main-screen`: the logo lockup on the left and [actions] (e.g. scan, search) on the right.
+ * [contentPadding] defaults to the mobile layout; tablets pass start 24dp / end 18dp.
  */
 @Composable
 fun VibeMainTopBar(
     modifier: Modifier = Modifier,
     windowInsets: WindowInsets = TopAppBarDefaults.windowInsets,
+    contentPadding: PaddingValues = PaddingValues(start = 16.dp, end = 10.dp),
     actions: @Composable RowScope.() -> Unit = {},
 ) {
     Row(
@@ -40,7 +43,7 @@ fun VibeMainTopBar(
             .fillMaxWidth()
             .windowInsetsPadding(windowInsets)
             .height(64.dp)
-            .padding(start = 16.dp, end = 10.dp),
+            .padding(contentPadding),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(

@@ -1,0 +1,7 @@
+<resources>
+    <string name="scan_music">Scan music</string>
+    <string name="scanning_device">Scanning your device for music…</string>
+    <string name="no_music_found">No music found</string>
+    <string name="no_music_found_description">Try scanning again or check your folders.</string>
+    <string name="scan_again">Scan again</string>
+</resources>

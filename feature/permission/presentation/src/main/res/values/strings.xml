@@ -1,0 +1,4 @@
+<resources>
+    <string name="permission_description">VibePlayer needs access to your music files to build your library and play songs</string>
+    <string name="allow_access">Allow Access</string>
+</resources>
