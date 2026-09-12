@@ -11,9 +11,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.rfcoding.vibeplayer.core.designsystem.theme.VibePlayerTheme
+import com.rfcoding.vibeplayer.feature.library.presentation.LibraryGraph
 import com.rfcoding.vibeplayer.feature.permission.presentation.PermissionGraph
 import com.rfcoding.vibeplayer.feature.permission.presentation.hasMusicPermission
-import com.rfcoding.vibeplayer.navigation.LibraryGraph
 import com.rfcoding.vibeplayer.navigation.NavigationRoot
 
 class MainActivity : ComponentActivity() {

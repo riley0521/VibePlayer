@@ -6,4 +6,8 @@
     <string name="skip_to_previous">Previous song</string>
     <string name="skip_to_next">Next song</string>
     <string name="open_player">Open player</string>
+
+    <string name="error_disk_full">Your device storage is full</string>
+    <string name="error_not_found">Couldn\'t find what you were looking for</string>
+    <string name="error_unknown">Something went wrong. Please try again</string>
 </resources>

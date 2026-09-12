@@ -1,5 +1,6 @@
 package com.rfcoding.vibeplayer.feature.library.presentation.library
 
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -28,11 +29,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rfcoding.vibeplayer.core.designsystem.components.VibeButton
 import com.rfcoding.vibeplayer.core.designsystem.components.VibeFab
 import com.rfcoding.vibeplayer.core.designsystem.components.VibeIconButton
@@ -44,15 +47,44 @@ import com.rfcoding.vibeplayer.core.designsystem.icons.VibeIcons
 import com.rfcoding.vibeplayer.core.designsystem.theme.VibePlayerTheme
 import com.rfcoding.vibeplayer.core.presentation.MiniPlayer
 import com.rfcoding.vibeplayer.core.presentation.MiniPlayerHeight
+import com.rfcoding.vibeplayer.core.presentation.ObserveAsEvents
 import com.rfcoding.vibeplayer.core.presentation.SongUi
 import com.rfcoding.vibeplayer.core.presentation.currentDeviceConfiguration
 import com.rfcoding.vibeplayer.feature.library.presentation.R
 import com.rfcoding.vibeplayer.feature.library.presentation.playlistname.PlaylistNameSheet
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 
 private val MobileTopBarPadding = PaddingValues(start = 16.dp, end = 10.dp)
 private val TabletTopBarPadding = PaddingValues(start = 24.dp, end = 18.dp)
 private val TabletMiniPlayerWidth = 480.dp
+
+@Composable
+fun LibraryRoot(
+    onScanClick: () -> Unit,
+    viewModel: LibraryViewModel = koinViewModel(),
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    ObserveAsEvents(viewModel.events) { event ->
+        when (event) {
+            is LibraryEvent.Error -> {
+                Toast.makeText(context, event.message.asString(context), Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    LibraryScreen(
+        state = state,
+        onAction = { action ->
+            when (action) {
+                LibraryAction.OnScanClick -> onScanClick()
+                else -> viewModel.onAction(action)
+            }
+        },
+    )
+}
 
 @Composable
 fun LibraryScreen(

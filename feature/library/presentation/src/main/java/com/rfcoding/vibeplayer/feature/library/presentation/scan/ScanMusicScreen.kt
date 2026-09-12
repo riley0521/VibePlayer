@@ -1,5 +1,6 @@
 package com.rfcoding.vibeplayer.feature.library.presentation.scan
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,25 +13,58 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rfcoding.vibeplayer.core.designsystem.components.VibeButton
 import com.rfcoding.vibeplayer.core.designsystem.components.VibeFilterChip
 import com.rfcoding.vibeplayer.core.designsystem.components.VibeInnerTopBar
 import com.rfcoding.vibeplayer.core.designsystem.components.VibeRadar
 import com.rfcoding.vibeplayer.core.designsystem.theme.VibePlayerTheme
 import com.rfcoding.vibeplayer.core.designsystem.theme.bodyLargeMedium
+import com.rfcoding.vibeplayer.core.presentation.ObserveAsEvents
 import com.rfcoding.vibeplayer.core.presentation.currentDeviceConfiguration
 import com.rfcoding.vibeplayer.feature.library.domain.MinDuration
 import com.rfcoding.vibeplayer.feature.library.domain.MinSize
 import com.rfcoding.vibeplayer.feature.library.presentation.R
+import org.koin.androidx.compose.koinViewModel
 
 // VibeInnerTopBar already pads itself to Figma's mobile 10dp; tablets add the missing 8dp.
 private val TabletTopBarPadding = 8.dp
 private val ContentMaxWidth = 400.dp
+
+@Composable
+fun ScanMusicRoot(
+    onNavigateBack: () -> Unit,
+    viewModel: ScanMusicViewModel = koinViewModel(),
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    ObserveAsEvents(viewModel.events) { event ->
+        when (event) {
+            ScanMusicEvent.NavigateBack -> onNavigateBack()
+            is ScanMusicEvent.Error -> {
+                Toast.makeText(context, event.message.asString(context), Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    ScanMusicScreen(
+        state = state,
+        onAction = { action ->
+            when (action) {
+                ScanMusicAction.OnBackClick -> onNavigateBack()
+                else -> viewModel.onAction(action)
+            }
+        },
+    )
+}
 
 @Composable
 fun ScanMusicScreen(

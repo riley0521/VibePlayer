@@ -11,3 +11,13 @@ enum class MinSize(val bytes: Long) {
     OneHundredKb(100 * 1024),
     FiveHundredKb(500 * 1024),
 }
+
+/** The defaults are what the silent background scan uses. */
+data class ScanFilters(
+    val minDuration: MinDuration = MinDuration.ThirtySeconds,
+    val minSize: MinSize = MinSize.OneHundredKb,
+) {
+    fun acceptsSize(bytes: Long): Boolean = bytes >= minSize.bytes
+
+    fun acceptsDuration(millis: Long): Boolean = millis >= minDuration.millis
+}
