@@ -7,10 +7,14 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.rfcoding.vibeplayer.core.designsystem.theme.VibePlayerTheme
+import com.rfcoding.vibeplayer.feature.permission.presentation.PermissionGraph
+import com.rfcoding.vibeplayer.feature.permission.presentation.hasMusicPermission
+import com.rfcoding.vibeplayer.navigation.LibraryGraph
+import com.rfcoding.vibeplayer.navigation.NavigationRoot
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -23,9 +27,14 @@ class MainActivity : ComponentActivity() {
         )
         setContent {
             VibePlayerTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-
+                // Remembered so granting the permission navigates instead of rebuilding the graph.
+                val startDestination = remember {
+                    if (hasMusicPermission()) LibraryGraph else PermissionGraph
                 }
+                NavigationRoot(
+                    startDestination = startDestination,
+                    modifier = Modifier.fillMaxSize(),
+                )
             }
         }
     }

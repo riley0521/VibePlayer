@@ -2,6 +2,7 @@ package com.rfcoding.vibeplayer
 
 import android.app.Application
 import com.rfcoding.vibeplayer.di.appModule
+import com.rfcoding.vibeplayer.feature.permission.presentation.di.permissionPresentationModule
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import org.koin.android.ext.koin.androidContext
@@ -17,6 +18,7 @@ class VibePlayerApp : Application() {
             androidContext(this@VibePlayerApp)
             modules(
                 appModule,
+                permissionPresentationModule,
             )
         }
     }

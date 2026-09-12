@@ -1,4 +1,7 @@
 <resources>
     <string name="permission_description">VibePlayer needs access to your music files to build your library and play songs</string>
     <string name="allow_access">Allow Access</string>
+    <string name="permission_required_title">Music access is required</string>
+    <string name="permission_required_message">VibePlayer works entirely offline, so your music folder is the only place it can get songs from. Without this permission there is nothing to play.</string>
+    <string name="open_settings">Open settings</string>
 </resources>

@@ -2,7 +2,7 @@
 
 An Android music player that runs entirely offline (Kotlin, Jetpack Compose, Material 3). It scans the device's `Music/` folder, stores songs and playlists in Room, and plays audio through Media3. The app never uses the network. `minSdk 28`, `compileSdk`/`targetSdk 37`, package `com.rfcoding.vibeplayer`.
 
-> **Current state:** every module under "Target module layout" exists and is wired into `:app`, but most contain no code yet. Build config lives in `:build-logic` convention plugins, applied as `alias(libs.plugins.vibeplayer.<name>)`:
+> **Current state:** every module under "Target module layout" exists and is wired into `:app`, but most contain no code yet. The UI, however, is done: all screens and all design-system components are already implemented, so there is no need to open Figma unless the user asks for it. Build config lives in `:build-logic` convention plugins, applied as `alias(libs.plugins.vibeplayer.<name>)`:
 > `android.application`, `android.library`, `android.feature` (library + Compose + Koin + serialization, plus `:core:domain`, `:core:presentation`, `:core:design-system`, navigation and lifecycle-compose), `domain.module` (pure Kotlin; its `testDebugUnitTest` task aliases `test`), `compose`, `koin`, `room` and `kotlinx.serialization`.
 > Apply these plugins instead of writing Android config by hand, and add every new dependency to `gradle/libs.versions.toml`.
 
@@ -11,7 +11,7 @@ An Android music player that runs entirely offline (Kotlin, Jetpack Compose, Mat
 | Resource | Location | When to load it |
 |---|---|---|
 | Requirements (the source of truth for behavior) | `specs/vibe-player-requirements.md` | Before any feature work, read the section for the screen you're changing. It is deliberately **not** auto-imported. |
-| Figma designs | Links in the spec's **Figma links** section. Each screen names its Figma layers, and mobile and tablet layers share the same names. | **Only** for UI or design-system work. Fetch them through the project-scoped `figma@claude-plugins-official` plugin. If the Figma tools aren't loaded, ask the user to authenticate with `/mcp`; never guess a design. |
+| Figma designs | Links in the spec's **Figma links** section. Each screen names its Figma layers, and mobile and tablet layers share the same names. | **Only when the user explicitly asks.** Every screen and every reusable component has already been built, so the existing composables are the source of truth for layout, spacing, colors and type — copy a comparable one instead of fetching a design. When the user does ask, fetch through the project-scoped `figma@claude-plugins-official` plugin; if the Figma tools aren't loaded, ask the user to authenticate with `/mcp`, and never guess a design. |
 | App font (Host Grotesk, variable) | `specs/fonts/Host_Grotesk/HostGrotesk-VariableFont_wght.ttf` | When setting up the design system: copy it into `res/font` of `:core:design-system`. |
 | Project skills | `.claude/skills/<skill>/SKILL.md` | See "Skills" below. |
 
