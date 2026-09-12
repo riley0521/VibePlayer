@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.Color
 internal val ButtonPrimary = Color(0xFFDE84FF)
 internal val ButtonPrimary30 = Color(0x4DDE84FF)
 internal val ButtonHover = Color(0x471A2735)
+internal val ButtonDestructive = Color(0xFFFF5667)
 
 internal val TextPrimary = Color(0xFFFFFFFF)
 internal val TextSecondary = Color(0xFFA7BBD1)

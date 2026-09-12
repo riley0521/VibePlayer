@@ -13,6 +13,8 @@ data class ExtendedColors(
     val buttonPrimary30: Color,
     /** Button/Hover: pressed overlay, icon-button and input backgrounds, disabled Filled button. */
     val buttonHover: Color,
+    /** Button/Destructive: the Delete confirmation's filled button. */
+    val buttonDestructive: Color,
     /** Text/Disabled */
     val textDisabled: Color,
     /** Surface/On-Surface: track of the mini player's progress bar. */
@@ -22,6 +24,7 @@ data class ExtendedColors(
 internal val DarkExtendedColors = ExtendedColors(
     buttonPrimary30 = ButtonPrimary30,
     buttonHover = ButtonHover,
+    buttonDestructive = ButtonDestructive,
     textDisabled = TextDisabled,
     onSurfaceOverlay = OnSurfaceOverlay,
 )

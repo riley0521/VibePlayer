@@ -39,10 +39,25 @@
     <string name="create_playlist">Create playlist</string>
 
     <string name="create_new_playlist">Create New Playlist</string>
+    <string name="rename_playlist">Rename Playlist</string>
+    <string name="rename">Rename</string>
     <string name="playlist_name_placeholder">Enter playlist name</string>
     <string name="cancel">Cancel</string>
     <string name="create">Create</string>
 
     <string name="search">Search</string>
     <string name="no_results_found">No results found</string>
+
+    <string name="add_songs">Add Songs</string>
+    <string name="selected_count">%d Selected</string>
+    <string name="select_all">Select All</string>
+    <string name="ok">OK</string>
+
+    <string name="action_play">Play</string>
+    <string name="action_rename">Rename</string>
+    <string name="action_change_cover">Change Cover</string>
+    <string name="action_delete">Delete</string>
+
+    <string name="delete_playlist_title">Delete Playlist</string>
+    <string name="delete_playlist_message">Are you sure you want to delete playlist %s?</string>
 </resources>

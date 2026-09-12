@@ -3,6 +3,7 @@ package com.rfcoding.vibeplayer.core.designsystem.components
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -33,38 +34,73 @@ fun SongCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    ListItemRow(onClick = onClick, modifier = modifier) {
-        SongArtwork(imageUri = imageUri, modifier = Modifier.size(64.dp))
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
-        ) {
+    VibeListItemRow(onClick = onClick, modifier = modifier) {
+        SongCardContent(title = title, artistName = artistName, duration = duration, imageUri = imageUri)
+    }
+}
+
+/**
+ * Figma "song-card" with the Add songs screen's leading checkbox. The row owns the toggle, so the
+ * checkbox itself takes no click.
+ */
+@Composable
+fun SelectableSongCard(
+    title: String,
+    artistName: String?,
+    duration: String,
+    imageUri: String?,
+    selected: Boolean,
+    onSelectedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    VibeSelectableListItemRow(
+        selected = selected,
+        onSelectedChange = onSelectedChange,
+        modifier = modifier,
+    ) {
+        VibeCheckbox(checked = selected, onCheckedChange = null)
+        SongCardContent(title = title, artistName = artistName, duration = duration, imageUri = imageUri)
+    }
+}
+
+/** Artwork, titles and duration, shared so the plain and selectable cards can't drift apart. */
+@Composable
+private fun RowScope.SongCardContent(
+    title: String,
+    artistName: String?,
+    duration: String,
+    imageUri: String?,
+) {
+    SongArtwork(imageUri = imageUri, modifier = Modifier.size(64.dp))
+    Column(
+        modifier = Modifier.weight(1f),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        if (artistName != null) {
             Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
+                text = artistName,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            if (artistName != null) {
-                Text(
-                    text = artistName,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
         }
-        Text(
-            text = duration,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.End,
-            maxLines = 1,
-            modifier = Modifier.widthIn(min = 40.dp),
-        )
     }
+    Text(
+        text = duration,
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.End,
+        maxLines = 1,
+        modifier = Modifier.widthIn(min = 40.dp),
+    )
 }
 
 /**
@@ -110,6 +146,29 @@ private fun SongCardPreview() {
             duration = "12:05",
             imageUri = null,
             onClick = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun SelectableSongCardPreview() {
+    PreviewSurface {
+        SelectableSongCard(
+            title = "Midnight Drive",
+            artistName = "The Night Owls",
+            duration = "3:45",
+            imageUri = null,
+            selected = true,
+            onSelectedChange = {},
+        )
+        SelectableSongCard(
+            title = "Last Nite",
+            artistName = "The Strokes",
+            duration = "3:12",
+            imageUri = null,
+            selected = false,
+            onSelectedChange = {},
         )
     }
 }

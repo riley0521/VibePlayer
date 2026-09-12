@@ -31,7 +31,7 @@ import com.rfcoding.vibeplayer.core.designsystem.icons.VibeIcons
 import com.rfcoding.vibeplayer.core.designsystem.theme.bodyLargeMedium
 import com.rfcoding.vibeplayer.core.designsystem.theme.extendedColors
 
-enum class VibeButtonStyle { Filled, Outlined, Text }
+enum class VibeButtonStyle { Filled, Outlined, Text, Destructive }
 
 /**
  * Figma "Button". [isLoading] shows the loader before the label and makes the button non-clickable.
@@ -54,15 +54,20 @@ fun VibeButton(
 
     val contentColor = when {
         !isClickable -> extendedColors.textDisabled
-        style == VibeButtonStyle.Filled -> colorScheme.onPrimary
+        style == VibeButtonStyle.Filled || style == VibeButtonStyle.Destructive -> colorScheme.onPrimary
         style == VibeButtonStyle.Outlined -> colorScheme.onSurface
         else -> colorScheme.primary
     }
     val containerModifier = when (style) {
-        VibeButtonStyle.Filled -> Modifier
+        // Figma gives the destructive button the same purple glow as the primary one, so both share it.
+        VibeButtonStyle.Filled, VibeButtonStyle.Destructive -> Modifier
             .then(if (isClickable && !isPressed) Modifier.primaryDropShadow(CircleShape) else Modifier)
             .background(
-                color = if (isClickable) colorScheme.primary else extendedColors.buttonHover,
+                color = when {
+                    !isClickable -> extendedColors.buttonHover
+                    style == VibeButtonStyle.Destructive -> extendedColors.buttonDestructive
+                    else -> colorScheme.primary
+                },
                 shape = CircleShape,
             )
             .height(44.dp)
@@ -135,6 +140,20 @@ private fun VibeButtonPreview() {
             )
         }
         VibeButton(text = "Cancel", onClick = {}, style = VibeButtonStyle.Outlined, enabled = false)
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            VibeButton(
+                text = "Cancel",
+                onClick = {},
+                style = VibeButtonStyle.Outlined,
+                modifier = Modifier.weight(1f),
+            )
+            VibeButton(
+                text = "Delete",
+                onClick = {},
+                style = VibeButtonStyle.Destructive,
+                modifier = Modifier.weight(1f),
+            )
+        }
         VibeButton(text = "Cancel", onClick = {}, style = VibeButtonStyle.Text)
         VibeButton(text = "Cancel", onClick = {}, style = VibeButtonStyle.Text, enabled = false)
     }

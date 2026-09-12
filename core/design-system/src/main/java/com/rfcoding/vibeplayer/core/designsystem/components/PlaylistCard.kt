@@ -33,17 +33,18 @@ sealed interface PlaylistArtwork {
 /**
  * Figma "playlist-card". [subtitle] is already formatted by the caller (e.g. "12 songs").
  * Passing [onMenuClick] adds the trailing options button; the "create playlist" row leaves it out.
+ * A null [onClick] leaves the card inert, which is how the action sheet reuses it as a header.
  */
 @Composable
 fun PlaylistCard(
     title: String,
     subtitle: String?,
     artwork: PlaylistArtwork,
-    onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
     onMenuClick: (() -> Unit)? = null,
 ) {
-    ListItemRow(onClick = onClick, modifier = modifier) {
+    VibeListItemRow(onClick = onClick, modifier = modifier) {
         PlaylistArtworkImage(
             artwork = artwork,
             modifier = Modifier

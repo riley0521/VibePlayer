@@ -47,6 +47,7 @@ import com.rfcoding.vibeplayer.core.presentation.MiniPlayerHeight
 import com.rfcoding.vibeplayer.core.presentation.SongUi
 import com.rfcoding.vibeplayer.core.presentation.currentDeviceConfiguration
 import com.rfcoding.vibeplayer.feature.library.presentation.R
+import com.rfcoding.vibeplayer.feature.library.presentation.playlistname.PlaylistNameSheet
 import kotlinx.coroutines.launch
 
 private val MobileTopBarPadding = PaddingValues(start = 16.dp, end = 10.dp)
@@ -159,6 +160,26 @@ fun LibraryScreen(
                 }
             }
         }
+    }
+
+    val onSheetDismiss = { onAction(LibraryAction.OnSheetDismiss) }
+    when (val sheet = state.activeSheet) {
+        null -> Unit
+        is LibrarySheet.PlaylistActions -> PlaylistActionSheet(
+            sheet = sheet,
+            onAction = onAction,
+            onDismiss = onSheetDismiss,
+        )
+        is LibrarySheet.DeletePlaylist -> DeletePlaylistSheet(
+            sheet = sheet,
+            onAction = onAction,
+            onDismiss = onSheetDismiss,
+        )
+        is LibrarySheet.PlaylistName -> PlaylistNameSheet(
+            state = sheet.state,
+            onAction = { onAction(LibraryAction.OnPlaylistNameAction(it)) },
+            onDismiss = onSheetDismiss,
+        )
     }
 }
 
