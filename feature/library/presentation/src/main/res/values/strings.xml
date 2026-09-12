@@ -24,4 +24,25 @@
     <string name="size_500kb" translatable="false">500KB</string>
     <string name="scan">Scan</string>
     <string name="scanning">Scanning</string>
+
+    <plurals name="playlist_count">
+        <item quantity="one">%d Playlist</item>
+        <item quantity="other">%d Playlists</item>
+    </plurals>
+    <string name="my_playlists">My Playlists (%d)</string>
+    <string name="favourites">Favourites</string>
+    <!-- Lowercase on the playlist cards, unlike the Songs tab header's songs_count. -->
+    <plurals name="playlist_song_count">
+        <item quantity="one">%d song</item>
+        <item quantity="other">%d songs</item>
+    </plurals>
+    <string name="create_playlist">Create playlist</string>
+
+    <string name="create_new_playlist">Create New Playlist</string>
+    <string name="playlist_name_placeholder">Enter playlist name</string>
+    <string name="cancel">Cancel</string>
+    <string name="create">Create</string>
+
+    <string name="search">Search</string>
+    <string name="no_results_found">No results found</string>
 </resources>

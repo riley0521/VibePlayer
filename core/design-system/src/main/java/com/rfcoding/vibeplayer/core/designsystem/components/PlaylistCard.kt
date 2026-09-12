@@ -11,11 +11,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.rfcoding.vibeplayer.core.designsystem.R
 import com.rfcoding.vibeplayer.core.designsystem.icons.VibeIcons
 
 /** The four artwork types of Figma's playlist-card. */
@@ -29,6 +32,7 @@ sealed interface PlaylistArtwork {
 
 /**
  * Figma "playlist-card". [subtitle] is already formatted by the caller (e.g. "12 songs").
+ * Passing [onMenuClick] adds the trailing options button; the "create playlist" row leaves it out.
  */
 @Composable
 fun PlaylistCard(
@@ -37,6 +41,7 @@ fun PlaylistCard(
     artwork: PlaylistArtwork,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onMenuClick: (() -> Unit)? = null,
 ) {
     ListItemRow(onClick = onClick, modifier = modifier) {
         PlaylistArtworkImage(
@@ -65,6 +70,15 @@ fun PlaylistCard(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
+        }
+        if (onMenuClick != null) {
+            // Figma leaves the card's options button unfilled, unlike the top bar's icon buttons.
+            VibeIconButton(
+                icon = VibeIcons.MenuDots,
+                contentDescription = stringResource(R.string.playlist_options),
+                onClick = onMenuClick,
+                containerColor = Color.Transparent,
+            )
         }
     }
 }
@@ -111,8 +125,20 @@ private fun PlaylistArtworkImage(
 @Composable
 private fun PlaylistCardPreview() {
     PreviewSurface {
-        PlaylistCard(title = "Favourites", subtitle = "24 songs", artwork = PlaylistArtwork.Favourites, onClick = {})
-        PlaylistCard(title = "Road trip", subtitle = "8 songs", artwork = PlaylistArtwork.Default, onClick = {})
+        PlaylistCard(
+            title = "Favourites",
+            subtitle = "24 songs",
+            artwork = PlaylistArtwork.Favourites,
+            onClick = {},
+            onMenuClick = {},
+        )
+        PlaylistCard(
+            title = "Road trip",
+            subtitle = "8 songs",
+            artwork = PlaylistArtwork.Default,
+            onClick = {},
+            onMenuClick = {},
+        )
         PlaylistCard(title = "Create playlist", subtitle = null, artwork = PlaylistArtwork.Create, onClick = {})
     }
 }

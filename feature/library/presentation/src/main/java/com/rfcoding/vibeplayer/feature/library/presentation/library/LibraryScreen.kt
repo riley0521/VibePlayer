@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -40,6 +39,7 @@ import com.rfcoding.vibeplayer.core.designsystem.components.VibeIconButton
 import com.rfcoding.vibeplayer.core.designsystem.components.VibeMainTopBar
 import com.rfcoding.vibeplayer.core.designsystem.components.VibeRadar
 import com.rfcoding.vibeplayer.core.designsystem.components.VibeTabRow
+import com.rfcoding.vibeplayer.core.designsystem.components.bottomFade
 import com.rfcoding.vibeplayer.core.designsystem.icons.VibeIcons
 import com.rfcoding.vibeplayer.core.designsystem.theme.VibePlayerTheme
 import com.rfcoding.vibeplayer.core.presentation.MiniPlayer
@@ -115,6 +115,9 @@ fun LibraryScreen(
                     isMobile = isMobile,
                     listState = listState,
                     bottomContentPadding = bottomInset + if (hasMiniPlayer) MiniPlayerHeight else 0.dp,
+                    // Figma's "Rectangle 5". It sits on the list only: the modifier paints over every
+                    // child of the node it's applied to, so the FAB and mini player must stay outside.
+                    modifier = Modifier.bottomFade(MaterialTheme.colorScheme.background),
                 )
             }
 
@@ -190,8 +193,12 @@ private fun LoadedContent(
                 bottomContentPadding = bottomContentPadding,
                 onAction = onAction,
             )
-            // The playlists land with the Playlists work.
-            LibraryTab.Playlist -> Spacer(modifier = Modifier.fillMaxSize())
+            LibraryTab.Playlist -> LibraryPlaylistTab(
+                state = state,
+                isMobile = isMobile,
+                bottomContentPadding = bottomContentPadding,
+                onAction = onAction,
+            )
         }
     }
 }
@@ -295,6 +302,41 @@ private fun LibraryScreenSongsPreview() {
     VibePlayerTheme {
         LibraryScreen(
             state = LibraryState(status = LibraryStatus.Loaded, songs = PreviewSongs),
+            onAction = {},
+        )
+    }
+}
+
+@Preview(name = "Mobile", widthDp = 412, heightDp = 917)
+@Preview(name = "Tablet", widthDp = 840, heightDp = 917)
+@Composable
+private fun LibraryScreenNoPlaylistPreview() {
+    VibePlayerTheme {
+        LibraryScreen(
+            state = LibraryState(
+                status = LibraryStatus.Loaded,
+                songs = PreviewSongs,
+                selectedTab = LibraryTab.Playlist,
+                favouriteSongCount = 2,
+            ),
+            onAction = {},
+        )
+    }
+}
+
+@Preview(name = "Mobile", widthDp = 412, heightDp = 917)
+@Preview(name = "Tablet", widthDp = 840, heightDp = 917)
+@Composable
+private fun LibraryScreenHavePlaylistPreview() {
+    VibePlayerTheme {
+        LibraryScreen(
+            state = LibraryState(
+                status = LibraryStatus.Loaded,
+                songs = PreviewSongs,
+                selectedTab = LibraryTab.Playlist,
+                favouriteSongCount = 2,
+                playlists = PreviewPlaylists,
+            ),
             onAction = {},
         )
     }

@@ -68,6 +68,7 @@ fun VibeMainTopBar(
 
 /**
  * Figma nav-bar `search`: the search field and a Cancel text button.
+ * [contentPadding] defaults to the mobile layout; tablets pass start 24dp / end 16dp.
  */
 @Composable
 fun VibeSearchTopBar(
@@ -79,13 +80,14 @@ fun VibeSearchTopBar(
     cancelText: String,
     modifier: Modifier = Modifier,
     windowInsets: WindowInsets = TopAppBarDefaults.windowInsets,
+    contentPadding: PaddingValues = PaddingValues(start = 16.dp, end = 8.dp),
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
             .windowInsetsPadding(windowInsets)
             .height(64.dp)
-            .padding(start = 16.dp, end = 8.dp),
+            .padding(contentPadding),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

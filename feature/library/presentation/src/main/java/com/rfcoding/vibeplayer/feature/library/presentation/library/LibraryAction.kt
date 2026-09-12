@@ -13,4 +13,9 @@ sealed interface LibraryAction {
     data object OnSkipToPreviousClick : LibraryAction
     data object OnSkipNextClick : LibraryAction
     data class OnSeek(val fraction: Float) : LibraryAction
+    data object OnCreatePlaylistClick : LibraryAction
+    data object OnFavouritesClick : LibraryAction
+    data object OnFavouritesMenuClick : LibraryAction
+    data class OnPlaylistClick(val playlistId: Long) : LibraryAction
+    data class OnPlaylistMenuClick(val playlistId: Long) : LibraryAction
 }
