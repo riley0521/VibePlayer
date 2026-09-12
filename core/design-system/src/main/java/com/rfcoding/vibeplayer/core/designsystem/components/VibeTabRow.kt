@@ -24,7 +24,9 @@ import androidx.compose.ui.unit.dp
 import com.rfcoding.vibeplayer.core.designsystem.theme.bodyMediumMedium
 
 /**
- * Figma "tab-bar": equal-width text tabs over a divider, the selected one underlined.
+ * Figma "tab-bar": text tabs over a divider, the selected one underlined.
+ * [stretchTabs] gives every tab an equal share of the row (mobile); when false they hug their
+ * labels and the row is start-aligned, which is how the tablet layouts draw it.
  */
 @Composable
 fun VibeTabRow(
@@ -32,6 +34,7 @@ fun VibeTabRow(
     selectedTabIndex: Int,
     onTabClick: (index: Int) -> Unit,
     modifier: Modifier = Modifier,
+    stretchTabs: Boolean = true,
 ) {
     Row(
         modifier = modifier
@@ -45,7 +48,7 @@ fun VibeTabRow(
                 title = title,
                 selected = index == selectedTabIndex,
                 onClick = { onTabClick(index) },
-                modifier = Modifier.weight(1f),
+                modifier = if (stretchTabs) Modifier.weight(1f) else Modifier,
             )
         }
     }
@@ -118,5 +121,11 @@ private fun VibeTabRowPreview() {
     PreviewSurface {
         VibeTabRow(tabs = listOf("Songs", "Playlists"), selectedTabIndex = 0, onTabClick = {})
         VibeTabRow(tabs = listOf("Songs", "Playlists"), selectedTabIndex = 1, onTabClick = {})
+        VibeTabRow(
+            tabs = listOf("Songs", "Playlists"),
+            selectedTabIndex = 0,
+            onTabClick = {},
+            stretchTabs = false,
+        )
     }
 }

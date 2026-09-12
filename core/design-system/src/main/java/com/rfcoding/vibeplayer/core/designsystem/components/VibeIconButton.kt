@@ -20,12 +20,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.rfcoding.vibeplayer.core.designsystem.icons.VibeIcons
 import com.rfcoding.vibeplayer.core.designsystem.theme.extendedColors
 
+private val MinTouchTargetSize = 48.dp
+
 /**
- * The round icon button of the nav bars: a 44dp touch target around a 36dp circle with a 16dp glyph.
+ * The round icon button of the nav bars: a 48dp touch target around a 36dp circle with a 16dp glyph.
+ *
+ * The player screens reuse it for their transport controls by growing [containerSize] and [iconSize]
+ * (the 60dp white play/pause circle) or by clearing [containerColor] (the bare shuffle/repeat boxes).
+ * The touch target never shrinks below 48dp.
  */
 @Composable
 fun VibeIconButton(
@@ -34,11 +41,14 @@ fun VibeIconButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     tint: Color = MaterialTheme.colorScheme.onSurface,
+    containerSize: Dp = 36.dp,
+    iconSize: Dp = 16.dp,
+    containerColor: Color = MaterialTheme.extendedColors.buttonHover,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     Box(
         modifier = modifier
-            .size(44.dp)
+            .size(maxOf(containerSize, MinTouchTargetSize))
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -49,9 +59,9 @@ fun VibeIconButton(
     ) {
         Box(
             modifier = Modifier
-                .size(36.dp)
+                .size(containerSize)
                 .clip(CircleShape)
-                .background(MaterialTheme.extendedColors.buttonHover)
+                .background(containerColor)
                 .indication(interactionSource, PressedOverlayIndication),
             contentAlignment = Alignment.Center,
         ) {
@@ -59,7 +69,7 @@ fun VibeIconButton(
                 imageVector = icon,
                 contentDescription = contentDescription,
                 tint = tint,
-                modifier = Modifier.size(16.dp),
+                modifier = Modifier.size(iconSize),
             )
         }
     }
@@ -78,6 +88,40 @@ private fun VibeIconButtonPreview() {
                 contentDescription = null,
                 onClick = {},
                 tint = MaterialTheme.colorScheme.primary,
+            )
+        }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            VibeIconButton(
+                icon = VibeIcons.Shuffle,
+                contentDescription = null,
+                onClick = {},
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                iconSize = 20.dp,
+                containerColor = Color.Transparent,
+            )
+            VibeIconButton(
+                icon = VibeIcons.SkipPrevious,
+                contentDescription = null,
+                onClick = {},
+                containerSize = 48.dp,
+            )
+            VibeIconButton(
+                icon = VibeIcons.PlayFilled,
+                contentDescription = null,
+                onClick = {},
+                tint = MaterialTheme.colorScheme.surface,
+                containerSize = 60.dp,
+                iconSize = 24.dp,
+                containerColor = MaterialTheme.colorScheme.onSurface,
+            )
+            VibeIconButton(
+                icon = VibeIcons.SkipNext,
+                contentDescription = null,
+                onClick = {},
+                containerSize = 48.dp,
             )
         }
     }

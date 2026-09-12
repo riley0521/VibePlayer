@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="seek_position" translatable="false">%1$s / %2$s</string>
+    <string name="play">Play</string>
+    <string name="pause">Pause</string>
+    <string name="skip_to_previous">Previous song</string>
+    <string name="skip_to_next">Next song</string>
+    <string name="open_player">Open player</string>
+</resources>
