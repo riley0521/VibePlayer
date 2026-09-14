@@ -6,10 +6,15 @@ import assertk.assertions.containsExactly
 import assertk.assertions.hasSize
 import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
+import assertk.assertions.isNull
+import com.rfcoding.vibeplayer.core.domain.player.PlaybackState
+import com.rfcoding.vibeplayer.core.domain.player.RepeatMode
 import com.rfcoding.vibeplayer.core.domain.util.DataError
 import com.rfcoding.vibeplayer.core.domain.util.Result
+import com.rfcoding.vibeplayer.core.presentation.toSongUi
 import com.rfcoding.vibeplayer.feature.library.domain.ScanFilters
 import com.rfcoding.vibeplayer.feature.library.presentation.fakes.FakeMusicLibraryRepository
+import com.rfcoding.vibeplayer.feature.library.presentation.fakes.FakeMusicPlayer
 import com.rfcoding.vibeplayer.feature.library.presentation.fakes.FakeSongLocalDataSource
 import com.rfcoding.vibeplayer.feature.library.presentation.fakes.song
 import kotlinx.coroutines.CompletableDeferred
@@ -29,12 +34,14 @@ class LibraryViewModelTest {
 
     private lateinit var repository: FakeMusicLibraryRepository
     private lateinit var songDataSource: FakeSongLocalDataSource
+    private lateinit var musicPlayer: FakeMusicPlayer
 
     @BeforeEach
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         repository = FakeMusicLibraryRepository()
         songDataSource = FakeSongLocalDataSource()
+        musicPlayer = FakeMusicPlayer()
     }
 
     @AfterEach
@@ -42,7 +49,7 @@ class LibraryViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun createViewModel() = LibraryViewModel(repository, songDataSource)
+    private fun createViewModel() = LibraryViewModel(repository, songDataSource, musicPlayer)
 
     @Test
     fun `an empty library shows Scanning while the first scan runs`() = runTest {
@@ -128,5 +135,70 @@ class LibraryViewModelTest {
         viewModel.onAction(LibraryAction.OnTabSelect(LibraryTab.Playlist))
 
         assertThat(viewModel.state.value.selectedTab).isEqualTo(LibraryTab.Playlist)
+    }
+
+    @Test
+    fun `the mini player is hidden while nothing is queued`() = runTest {
+        val viewModel = createViewModel()
+
+        assertThat(viewModel.state.value.nowPlaying).isNull()
+    }
+
+    @Test
+    fun `the mini player follows the playback state`() = runTest {
+        val queue = listOf(song("a"), song("b"), song("c"))
+        val viewModel = createViewModel()
+
+        musicPlayer.playbackState.value = PlaybackState(
+            queue = queue,
+            currentIndex = 1,
+            isPlaying = true,
+            positionMillis = 12_000,
+        )
+
+        assertThat(viewModel.state.value.nowPlaying).isEqualTo(
+            NowPlayingUi(
+                song = queue[1].toSongUi(),
+                isPlaying = true,
+                positionMillis = 12_000,
+                canSkipToPrevious = true,
+            ),
+        )
+    }
+
+    @Test
+    fun `the first song of the queue can't skip to previous`() = runTest {
+        val viewModel = createViewModel()
+
+        musicPlayer.playbackState.value = PlaybackState(queue = listOf(song("a"), song("b")), currentIndex = 0)
+
+        assertThat(viewModel.state.value.nowPlaying?.canSkipToPrevious).isEqualTo(false)
+    }
+
+    @Test
+    fun `the first song can skip to previous when the queue repeats`() = runTest {
+        val viewModel = createViewModel()
+
+        musicPlayer.playbackState.value = PlaybackState(
+            queue = listOf(song("a"), song("b")),
+            currentIndex = 0,
+            repeatMode = RepeatMode.All,
+        )
+
+        assertThat(viewModel.state.value.nowPlaying?.canSkipToPrevious).isEqualTo(true)
+    }
+
+    @Test
+    fun `mini player buttons control the player`() = runTest {
+        val viewModel = createViewModel()
+
+        viewModel.onAction(LibraryAction.OnPlayPauseClick)
+        viewModel.onAction(LibraryAction.OnSkipNextClick)
+        viewModel.onAction(LibraryAction.OnSkipNextClick)
+        viewModel.onAction(LibraryAction.OnSkipToPreviousClick)
+
+        assertThat(musicPlayer.togglePlayPauseCount).isEqualTo(1)
+        assertThat(musicPlayer.skipToNextCount).isEqualTo(2)
+        assertThat(musicPlayer.skipToPreviousCount).isEqualTo(1)
     }
 }

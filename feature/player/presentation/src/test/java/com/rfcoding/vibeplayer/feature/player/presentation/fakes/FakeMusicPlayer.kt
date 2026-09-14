@@ -1,4 +1,4 @@
-package com.rfcoding.vibeplayer.feature.library.presentation.fakes
+package com.rfcoding.vibeplayer.feature.player.presentation.fakes
 
 import com.rfcoding.vibeplayer.core.domain.player.MusicPlayer
 import com.rfcoding.vibeplayer.core.domain.player.PlaybackState
@@ -9,14 +9,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 class FakeMusicPlayer : MusicPlayer {
     override val playbackState = MutableStateFlow(PlaybackState())
 
-    val playedQueues = mutableListOf<List<Song>>()
     var togglePlayPauseCount = 0
     var skipToNextCount = 0
     var skipToPreviousCount = 0
+    var toggleShuffleCount = 0
+    val repeatModes = mutableListOf<RepeatMode>()
 
-    override suspend fun play(queue: List<Song>) {
-        playedQueues += queue
-    }
+    override suspend fun play(queue: List<Song>) = Unit
 
     override suspend fun togglePlayPause() {
         togglePlayPauseCount++
@@ -30,7 +29,22 @@ class FakeMusicPlayer : MusicPlayer {
         skipToPreviousCount++
     }
 
-    override suspend fun setRepeatMode(repeatMode: RepeatMode) = Unit
+    override suspend fun setRepeatMode(repeatMode: RepeatMode) {
+        repeatModes += repeatMode
+    }
 
-    override suspend fun toggleShuffle() = Unit
+    override suspend fun toggleShuffle() {
+        toggleShuffleCount++
+    }
 }
+
+fun song(id: String, isFavorite: Boolean = false) = Song(
+    id = id,
+    title = "Song $id",
+    artistName = null,
+    fileUri = "content://$id",
+    imageUri = null,
+    durationMillis = 60_000,
+    isFavorite = isFavorite,
+    createdAt = 0,
+)

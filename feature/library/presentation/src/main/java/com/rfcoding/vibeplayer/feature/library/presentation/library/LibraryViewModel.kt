@@ -2,9 +2,12 @@ package com.rfcoding.vibeplayer.feature.library.presentation.library
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.rfcoding.vibeplayer.core.domain.player.MusicPlayer
+import com.rfcoding.vibeplayer.core.domain.player.PlaybackState
 import com.rfcoding.vibeplayer.core.domain.song.SongLocalDataSource
 import com.rfcoding.vibeplayer.core.domain.util.onFailure
 import com.rfcoding.vibeplayer.core.domain.util.onSuccess
+import com.rfcoding.vibeplayer.core.presentation.toSongUi
 import com.rfcoding.vibeplayer.core.presentation.toUiText
 import com.rfcoding.vibeplayer.feature.library.domain.MusicLibraryRepository
 import com.rfcoding.vibeplayer.feature.library.domain.ScanFilters
@@ -15,6 +18,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -26,7 +30,8 @@ import kotlin.time.Duration.Companion.seconds
  */
 class LibraryViewModel(
     private val musicLibraryRepository: MusicLibraryRepository,
-    private val songDataSource: SongLocalDataSource
+    private val songDataSource: SongLocalDataSource,
+    private val musicPlayer: MusicPlayer,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(LibraryState())
@@ -54,6 +59,10 @@ class LibraryViewModel(
             }
         }.launchIn(viewModelScope)
 
+        musicPlayer.playbackState
+            .onEach { playback -> _state.update { it.copy(nowPlaying = playback.toNowPlayingUi()) } }
+            .launchIn(viewModelScope)
+
         viewModelScope.launch {
             if (songDataSource.songs.first().isEmpty()) {
                 scanVisibly()
@@ -71,7 +80,10 @@ class LibraryViewModel(
                 if (!isVisibleScanRunning.value) viewModelScope.launch { scanVisibly() }
             }
             is LibraryAction.OnTabSelect -> _state.update { it.copy(selectedTab = action.tab) }
-            // Navigation is handled by the Root; playback and playlist actions land with their features.
+            LibraryAction.OnPlayPauseClick -> viewModelScope.launch { musicPlayer.togglePlayPause() }
+            LibraryAction.OnSkipToPreviousClick -> viewModelScope.launch { musicPlayer.skipToPrevious() }
+            LibraryAction.OnSkipNextClick -> viewModelScope.launch { musicPlayer.skipToNext() }
+            // Seeking isn't supported yet; navigation is handled by the Root.
             else -> Unit
         }
     }
@@ -90,5 +102,14 @@ class LibraryViewModel(
 
         delay(3.seconds)
         isVisibleScanRunning.value = false
+    }
+
+    private fun PlaybackState.toNowPlayingUi(): NowPlayingUi? = currentSong?.let { song ->
+        NowPlayingUi(
+            song = song.toSongUi(),
+            isPlaying = isPlaying,
+            positionMillis = positionMillis,
+            canSkipToPrevious = hasPrevious,
+        )
     }
 }

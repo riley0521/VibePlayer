@@ -1,5 +1,6 @@
 package com.rfcoding.vibeplayer.feature.player.presentation
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,22 +14,28 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rfcoding.vibeplayer.core.designsystem.components.SongArtwork
 import com.rfcoding.vibeplayer.core.designsystem.components.VibeIconButton
 import com.rfcoding.vibeplayer.core.designsystem.components.VibeInnerTopBar
 import com.rfcoding.vibeplayer.core.designsystem.components.VibeSeekBar
 import com.rfcoding.vibeplayer.core.designsystem.icons.VibeIcons
 import com.rfcoding.vibeplayer.core.designsystem.theme.VibePlayerTheme
+import com.rfcoding.vibeplayer.core.domain.player.RepeatMode
+import com.rfcoding.vibeplayer.core.presentation.ObserveAsEvents
 import com.rfcoding.vibeplayer.core.presentation.SongUi
 import com.rfcoding.vibeplayer.core.presentation.currentDeviceConfiguration
 import com.rfcoding.vibeplayer.core.presentation.toDurationText
+import org.koin.androidx.compose.koinViewModel
 import com.rfcoding.vibeplayer.core.presentation.R as PresentationR
 
 // VibeInnerTopBar already pads itself to Figma's mobile 10dp; tablets add the missing 8dp.
@@ -36,6 +43,33 @@ private val TabletTopBarPadding = 8.dp
 private val ArtworkSize = 320.dp
 private val TextBlockMaxWidth = 400.dp
 private val TransportMaxWidth = 768.dp
+
+@Composable
+fun PlayerRoot(
+    onNavigateBack: () -> Unit,
+    viewModel: PlayerViewModel = koinViewModel(),
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    ObserveAsEvents(viewModel.events) { event ->
+        when (event) {
+            is PlayerEvent.Error -> {
+                Toast.makeText(context, event.message.asString(context), Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    PlayerScreen(
+        state = state,
+        onAction = { action ->
+            when (action) {
+                PlayerAction.OnBackClick -> onNavigateBack()
+                else -> viewModel.onAction(action)
+            }
+        },
+    )
+}
 
 @Composable
 fun PlayerScreen(
@@ -77,6 +111,8 @@ fun PlayerScreen(
             )
         },
     ) { innerPadding ->
+        // Nothing is queued until the session connects; only the top bar shows meanwhile.
+        val song = state.song ?: return@Scaffold
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -90,7 +126,7 @@ fun PlayerScreen(
                 verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterVertically),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                SongArtwork(imageUri = state.song.imageUri, modifier = Modifier.size(ArtworkSize))
+                SongArtwork(imageUri = song.imageUri, modifier = Modifier.size(ArtworkSize))
                 Column(
                     modifier = Modifier
                         .widthIn(max = TextBlockMaxWidth)
@@ -99,12 +135,12 @@ fun PlayerScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(
-                        text = state.song.title,
+                        text = song.title,
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onSurface,
                         textAlign = TextAlign.Center,
                     )
-                    val artistName = state.song.artistName
+                    val artistName = song.artistName
                     if (artistName != null) {
                         Text(
                             text = artistName,
@@ -118,6 +154,7 @@ fun PlayerScreen(
 
             TransportControls(
                 state = state,
+                song = song,
                 onAction = onAction,
                 modifier = Modifier
                     .widthIn(max = TransportMaxWidth)
@@ -134,11 +171,12 @@ fun PlayerScreen(
 @Composable
 private fun TransportControls(
     state: PlayerState,
+    song: SongUi,
     onAction: (PlayerAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colorScheme = MaterialTheme.colorScheme
-    val durationText = state.song.durationText
+    val durationText = song.durationText
     val positionFormat = stringResource(PresentationR.string.seek_position)
 
     Column(
@@ -147,15 +185,15 @@ private fun TransportControls(
     ) {
         VibeSeekBar(
             progress = {
-                if (state.song.durationMillis > 0) {
-                    state.positionMillis.toFloat() / state.song.durationMillis
+                if (song.durationMillis > 0) {
+                    state.positionMillis.toFloat() / song.durationMillis
                 } else {
                     0f
                 }
             },
             onSeek = { onAction(PlayerAction.OnSeek(it)) },
             label = { fraction ->
-                val position = (state.song.durationMillis * fraction).toLong().toDurationText()
+                val position = (song.durationMillis * fraction).toLong().toDurationText()
                 positionFormat.format(position, durationText)
             },
         )

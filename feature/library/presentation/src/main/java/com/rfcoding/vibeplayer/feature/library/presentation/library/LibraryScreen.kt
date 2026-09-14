@@ -64,6 +64,7 @@ private val TabletMiniPlayerWidth = 480.dp
 fun LibraryRoot(
     onScanClick: () -> Unit,
     onPlaylistCreated: (playlistId: Long) -> Unit,
+    onMiniPlayerClick: () -> Unit,
     viewModel: LibraryViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -89,6 +90,7 @@ fun LibraryRoot(
         onAction = { action ->
             when (action) {
                 LibraryAction.OnScanClick -> onScanClick()
+                LibraryAction.OnMiniPlayerClick -> onMiniPlayerClick()
                 else -> viewModel.onAction(action)
             }
         },

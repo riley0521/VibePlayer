@@ -1,0 +1,33 @@
+package com.rfcoding.vibeplayer.core.domain.player
+
+import com.rfcoding.vibeplayer.core.domain.song.Song
+
+/**
+ * A mirror of the playback session. Every field comes from the session in the playback service, so it
+ * stays correct while only the service is running.
+ */
+data class PlaybackState(
+    /** The whole queue, in play order: songs already played, the current one, then the upcoming ones. */
+    val queue: List<Song> = emptyList(),
+    /** Index of the current song in [queue], or -1 when nothing is queued. */
+    val currentIndex: Int = -1,
+    val isPlaying: Boolean = false,
+    val positionMillis: Long = 0,
+    val isShuffleOn: Boolean = false,
+    val repeatMode: RepeatMode = RepeatMode.Off,
+    /** Song ids in the order the queue was started, which turning shuffle off restores. */
+    val originalOrder: List<String> = emptyList(),
+) {
+    val currentSong: Song?
+        get() = queue.getOrNull(currentIndex)
+
+    /** With [RepeatMode.All] the queue wraps around, so the first song has a previous one too. */
+    val hasPrevious: Boolean
+        get() = currentIndex > 0 || isLooping
+
+    val hasNext: Boolean
+        get() = currentIndex in 0 until queue.lastIndex || isLooping
+
+    private val isLooping: Boolean
+        get() = repeatMode == RepeatMode.All && queue.isNotEmpty()
+}

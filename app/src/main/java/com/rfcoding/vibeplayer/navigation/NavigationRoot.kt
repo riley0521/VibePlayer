@@ -8,6 +8,8 @@ import com.rfcoding.vibeplayer.feature.library.presentation.LibraryGraph
 import com.rfcoding.vibeplayer.feature.library.presentation.libraryGraph
 import com.rfcoding.vibeplayer.feature.permission.presentation.PermissionGraph
 import com.rfcoding.vibeplayer.feature.permission.presentation.permissionGraph
+import com.rfcoding.vibeplayer.feature.player.presentation.PlayerGraph
+import com.rfcoding.vibeplayer.feature.player.presentation.playerGraph
 
 @Composable
 fun NavigationRoot(
@@ -28,6 +30,14 @@ fun NavigationRoot(
                 }
             },
         )
-        libraryGraph(navController)
+        libraryGraph(
+            navController = navController,
+            onMiniPlayerClick = {
+                navController.navigate(PlayerGraph) { launchSingleTop = true }
+            },
+        )
+        playerGraph(
+            onNavigateBack = { navController.navigateUp() },
+        )
     }
 }

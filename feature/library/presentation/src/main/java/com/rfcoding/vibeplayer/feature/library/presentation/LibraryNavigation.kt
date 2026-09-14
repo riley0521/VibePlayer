@@ -22,13 +22,20 @@ data object ScanMusicRoute
 @Serializable
 data class AddSongsRoute(val playlistId: Long)
 
-/** Library → Scan music and Library → Add songs stay inside this feature, so the graph navigates on its own. */
-fun NavGraphBuilder.libraryGraph(navController: NavController) {
+/**
+ * Library → Scan music and Library → Add songs stay inside this feature, so the graph navigates on its
+ * own. Opening the player crosses into another feature, so `:app` handles [onMiniPlayerClick].
+ */
+fun NavGraphBuilder.libraryGraph(
+    navController: NavController,
+    onMiniPlayerClick: () -> Unit,
+) {
     navigation<LibraryGraph>(startDestination = LibraryRoute) {
         composable<LibraryRoute> {
             LibraryRoot(
                 onScanClick = { navController.navigate(ScanMusicRoute) },
                 onPlaylistCreated = { playlistId -> navController.navigate(AddSongsRoute(playlistId)) },
+                onMiniPlayerClick = onMiniPlayerClick,
             )
         }
         composable<ScanMusicRoute> {
