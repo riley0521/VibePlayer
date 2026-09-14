@@ -12,6 +12,8 @@ interface PlaylistLocalDataSource {
 
     /** Returns the new playlist's id. */
     suspend fun createPlaylist(name: String): Result<Long, DataError.Local>
+    suspend fun renamePlaylist(playlistId: Long, name: String): EmptyResult<DataError.Local>
+    suspend fun setPlaylistCover(playlistId: Long, coverUri: String): EmptyResult<DataError.Local>
     suspend fun deletePlaylist(playlistId: Long): EmptyResult<DataError.Local>
 
     /** Songs already in the playlist are left untouched. */

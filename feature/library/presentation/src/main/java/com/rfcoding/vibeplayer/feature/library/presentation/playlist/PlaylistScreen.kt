@@ -1,5 +1,10 @@
 package com.rfcoding.vibeplayer.feature.library.presentation.playlist
 
+import android.content.Intent
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -18,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -29,18 +35,50 @@ import com.rfcoding.vibeplayer.core.designsystem.components.VibeButtonStyle
 import com.rfcoding.vibeplayer.core.designsystem.components.VibeIconButton
 import com.rfcoding.vibeplayer.core.designsystem.icons.VibeIcons
 import com.rfcoding.vibeplayer.core.designsystem.theme.bodyLargeMedium
+import com.rfcoding.vibeplayer.core.presentation.DialogSheetScopedViewModel
 import com.rfcoding.vibeplayer.core.presentation.MiniPlayerHeight
+import com.rfcoding.vibeplayer.core.presentation.ObserveAsEvents
 import com.rfcoding.vibeplayer.core.presentation.PlaylistUi
 import com.rfcoding.vibeplayer.core.presentation.currentDeviceConfiguration
 import com.rfcoding.vibeplayer.feature.library.presentation.R
-import com.rfcoding.vibeplayer.feature.library.presentation.playlistname.PlaylistNameSheet
+import com.rfcoding.vibeplayer.feature.library.presentation.playlistname.PlaylistNameSheetRoot
 import org.koin.androidx.compose.koinViewModel
 
+/**
+ * @param onPlaylistCreated called with the new playlist's id once the create sheet has saved it.
+ */
 @Composable
 internal fun PlaylistRoot(
+    onPlaylistCreated: (playlistId: Long) -> Unit,
     viewModel: PlaylistViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    val coverPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            // Without a persistable grant the picked image stops loading after the app restarts.
+            try {
+                context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            } catch (_: SecurityException) {
+                // Some providers don't offer persistable grants; the cover still shows for this session.
+            }
+        }
+        viewModel.onAction(PlaylistAction.OnCoverPicked(uri?.toString()))
+    }
+
+    ObserveAsEvents(viewModel.events) { event ->
+        when (event) {
+            PlaylistEvent.LaunchCoverPicker -> coverPicker.launch(
+                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+            )
+            is PlaylistEvent.Error -> {
+                Toast.makeText(context, event.message.asString(context), Toast.LENGTH_LONG).show()
+            }
+        }
+    }
 
     PlaylistScreen(
         state = state,
@@ -49,7 +87,7 @@ internal fun PlaylistRoot(
 
     val onSheetDismiss = { viewModel.onAction(PlaylistAction.OnSheetDismiss) }
     when (val sheet = state.activeSheet) {
-        null -> Unit
+        null, is PlaylistSheet.PlaylistName -> Unit
         is PlaylistSheet.PlaylistActions -> PlaylistActionSheet(
             sheet = sheet,
             onAction = viewModel::onAction,
@@ -60,11 +98,21 @@ internal fun PlaylistRoot(
             onAction = viewModel::onAction,
             onDismiss = onSheetDismiss,
         )
-        is PlaylistSheet.PlaylistName -> PlaylistNameSheet(
-            state = sheet.state,
-            onAction = { viewModel.onAction(PlaylistAction.OnPlaylistNameAction(it)) },
-            onDismiss = onSheetDismiss,
-        )
+    }
+
+    val nameSheet = state.activeSheet as? PlaylistSheet.PlaylistName
+    DialogSheetScopedViewModel(visible = nameSheet != null) {
+        // The scope is cleared a frame after the sheet closes; show nothing in between.
+        nameSheet?.let {
+            PlaylistNameSheetRoot(
+                mode = it.mode,
+                onDismiss = onSheetDismiss,
+                onPlaylistCreated = { playlistId ->
+                    onSheetDismiss()
+                    onPlaylistCreated(playlistId)
+                },
+            )
+        }
     }
 }
 

@@ -9,4 +9,5 @@ fun PlaylistWithSongs.toPlaylist(): Playlist = Playlist(
     name = playlist.name,
     createdAt = playlist.createdAt,
     songs = songs.map { it.toSong() },
+    coverUri = playlist.coverUri,
 )

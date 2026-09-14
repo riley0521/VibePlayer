@@ -1,5 +1,6 @@
 package com.rfcoding.vibeplayer.core.database
 
+import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import com.rfcoding.vibeplayer.core.database.dao.PlaylistDao
@@ -14,8 +15,12 @@ import com.rfcoding.vibeplayer.core.database.entity.SongEntity
         PlaylistEntity::class,
         PlaylistSongCrossRef::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
+    autoMigrations = [
+        // 2 adds the nullable playlists.coverUri column.
+        AutoMigration(from = 1, to = 2),
+    ],
 )
 abstract class VibePlayerDatabase : RoomDatabase() {
     abstract val songDao: SongDao

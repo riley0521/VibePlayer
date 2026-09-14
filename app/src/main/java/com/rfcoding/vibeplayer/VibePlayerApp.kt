@@ -4,6 +4,7 @@ import android.app.Application
 import com.rfcoding.vibeplayer.core.data.di.coreDataModule
 import com.rfcoding.vibeplayer.core.database.di.databaseModule
 import com.rfcoding.vibeplayer.core.player.di.corePlayerModule
+import com.rfcoding.vibeplayer.core.presentation.di.corePresentationModule
 import com.rfcoding.vibeplayer.di.appModule
 import com.rfcoding.vibeplayer.feature.library.data.di.libraryDataModule
 import com.rfcoding.vibeplayer.feature.library.presentation.di.libraryPresentationModule
@@ -26,6 +27,7 @@ class VibePlayerApp : Application() {
                 databaseModule,
                 coreDataModule,
                 corePlayerModule,
+                corePresentationModule,
                 permissionPresentationModule,
                 libraryDataModule,
                 libraryPresentationModule,

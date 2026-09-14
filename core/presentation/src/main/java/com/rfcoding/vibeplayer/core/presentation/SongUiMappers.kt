@@ -11,10 +11,10 @@ fun Song.toSongUi(): SongUi = SongUi(
     durationMillis = durationMillis,
 )
 
-/** The cover is the first song's artwork until playlists get a cover of their own. */
+/** The cover the user picked wins; otherwise the first song that has artwork lends it. */
 fun Playlist.toPlaylistUi(): PlaylistUi = PlaylistUi(
     id = id,
     name = name,
     songCount = songs.size,
-    imageUri = songs.firstNotNullOfOrNull { it.imageUri },
+    imageUri = coverUri ?: songs.firstNotNullOfOrNull { it.imageUri },
 )

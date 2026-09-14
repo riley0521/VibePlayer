@@ -34,6 +34,14 @@ class RoomPlaylistDataSource(
         }
     }
 
+    override suspend fun renamePlaylist(playlistId: Long, name: String): EmptyResult<DataError.Local> {
+        return safeDatabaseUpdate { playlistDao.renamePlaylist(playlistId, name) }
+    }
+
+    override suspend fun setPlaylistCover(playlistId: Long, coverUri: String): EmptyResult<DataError.Local> {
+        return safeDatabaseUpdate { playlistDao.setPlaylistCover(playlistId, coverUri) }
+    }
+
     override suspend fun deletePlaylist(playlistId: Long): EmptyResult<DataError.Local> {
         return safeDatabaseUpdate { playlistDao.deletePlaylist(playlistId) }
     }

@@ -9,4 +9,6 @@ data class Playlist(
     /** Epoch milliseconds. */
     val createdAt: Long,
     val songs: List<Song>,
+    /** An image the user picked; null until they change the cover. */
+    val coverUri: String?,
 )

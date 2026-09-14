@@ -1,5 +1,6 @@
 package com.rfcoding.vibeplayer.feature.library.presentation.playlistname
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -9,17 +10,60 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rfcoding.vibeplayer.core.designsystem.components.VibeButton
 import com.rfcoding.vibeplayer.core.designsystem.components.VibeButtonStyle
 import com.rfcoding.vibeplayer.core.designsystem.components.VibeTextField
+import com.rfcoding.vibeplayer.core.presentation.ObserveAsEvents
 import com.rfcoding.vibeplayer.core.presentation.VibeBottomSheet
+import com.rfcoding.vibeplayer.feature.library.domain.PlaylistNameValidator
 import com.rfcoding.vibeplayer.feature.library.presentation.R
 import com.rfcoding.vibeplayer.feature.library.presentation.components.SheetPreviewSurface
+import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
+
+/**
+ * Hosts [PlaylistNameViewModel]; call it inside `DialogSheetScopedViewModel` so each opening of the
+ * sheet gets a fresh ViewModel for [mode].
+ */
+@Composable
+fun PlaylistNameSheetRoot(
+    mode: PlaylistNameMode,
+    onDismiss: () -> Unit,
+    onPlaylistCreated: (playlistId: Long) -> Unit,
+    viewModel: PlaylistNameViewModel = koinViewModel { parametersOf(mode) },
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    ObserveAsEvents(viewModel.events) { event ->
+        when (event) {
+            is PlaylistNameEvent.PlaylistCreated -> onPlaylistCreated(event.playlistId)
+            PlaylistNameEvent.PlaylistRenamed -> onDismiss()
+            is PlaylistNameEvent.Error -> {
+                Toast.makeText(context, event.message.asString(context), Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    PlaylistNameSheet(
+        state = state,
+        onAction = { action ->
+            when (action) {
+                PlaylistNameAction.OnCancelClick -> onDismiss()
+                else -> viewModel.onAction(action)
+            }
+        },
+        onDismiss = onDismiss,
+    )
+}
 
 /**
  * Figma "Create Playlist bottom sheet", which also serves the action sheet's Rename row: only the
@@ -47,11 +91,11 @@ internal fun PlaylistNameSheetContent(
 ) {
     val titleRes = when (state.mode) {
         PlaylistNameMode.Create -> R.string.create_new_playlist
-        PlaylistNameMode.Rename -> R.string.rename_playlist
+        is PlaylistNameMode.Rename -> R.string.rename_playlist
     }
     val confirmRes = when (state.mode) {
         PlaylistNameMode.Create -> R.string.create
-        PlaylistNameMode.Rename -> R.string.rename
+        is PlaylistNameMode.Rename -> R.string.rename
     }
 
     Column(
@@ -72,7 +116,7 @@ internal fun PlaylistNameSheetContent(
             value = state.name,
             onValueChange = { onAction(PlaylistNameAction.OnNameChange(it)) },
             placeholder = stringResource(R.string.playlist_name_placeholder),
-            maxLength = MaxPlaylistNameLength,
+            maxLength = PlaylistNameValidator.MAX_LENGTH,
         )
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             VibeButton(
@@ -120,7 +164,10 @@ private fun PlaylistNameSheetValidInputPreview() {
 private fun PlaylistNameSheetRenamePreview() {
     SheetPreviewSurface {
         PlaylistNameSheetContent(
-            state = PlaylistNameState(mode = PlaylistNameMode.Rename, name = "Friday Chill"),
+            state = PlaylistNameState(
+                mode = PlaylistNameMode.Rename(playlistId = 1, currentName = "Friday Chill"),
+                name = "Friday Chill",
+            ),
             onAction = {},
         )
     }

@@ -44,6 +44,8 @@
     <string name="playlist_name_placeholder">Enter playlist name</string>
     <string name="cancel">Cancel</string>
     <string name="create">Create</string>
+    <string name="error_playlist_name_blank">Playlist name can\'t be empty</string>
+    <string name="error_playlist_name_too_long">Playlist name can\'t be longer than %d characters</string>
 
     <string name="search">Search</string>
     <string name="no_results_found">No results found</string>

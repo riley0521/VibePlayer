@@ -97,7 +97,10 @@ fun LibraryRoot(
             SongsRoot(listState = listState)
         },
         playlistsTab = {
-            PlaylistRoot()
+            PlaylistRoot(
+                // TODO: navigate to the Add songs screen once it has a route.
+                onPlaylistCreated = {},
+            )
         }
     )
 }

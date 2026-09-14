@@ -8,4 +8,6 @@ data class PlaylistEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
     val createdAt: Long,
+    /** Added in version 2; a persisted content URI from the photo picker. */
+    val coverUri: String? = null,
 )

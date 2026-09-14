@@ -1,7 +1,7 @@
 package com.rfcoding.vibeplayer.feature.library.presentation.playlist
 
 import com.rfcoding.vibeplayer.core.presentation.PlaylistUi
-import com.rfcoding.vibeplayer.feature.library.presentation.playlistname.PlaylistNameState
+import com.rfcoding.vibeplayer.feature.library.presentation.playlistname.PlaylistNameMode
 
 data class PlaylistState(
     /** Drives the virtual Favourites card, which is always listed first and can't be deleted. */
@@ -32,9 +32,6 @@ sealed interface PlaylistSheet {
     /** Favourites can't be deleted, so this always names a real playlist. */
     data class DeletePlaylist(val playlist: PlaylistUi) : PlaylistSheet
 
-    /** Creating (a null [playlistId]) and renaming share one sheet. */
-    data class PlaylistName(
-        val state: PlaylistNameState,
-        val playlistId: Long? = null,
-    ) : PlaylistSheet
+    /** Creating and renaming share one sheet; it keeps its own state in `PlaylistNameViewModel`. */
+    data class PlaylistName(val mode: PlaylistNameMode) : PlaylistSheet
 }
