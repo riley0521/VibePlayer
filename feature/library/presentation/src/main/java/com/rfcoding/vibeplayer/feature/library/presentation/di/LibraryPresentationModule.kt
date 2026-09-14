@@ -1,5 +1,6 @@
 package com.rfcoding.vibeplayer.feature.library.presentation.di
 
+import com.rfcoding.vibeplayer.feature.library.presentation.addsongs.AddSongsViewModel
 import com.rfcoding.vibeplayer.feature.library.presentation.library.LibraryViewModel
 import com.rfcoding.vibeplayer.feature.library.presentation.playlist.PlaylistViewModel
 import com.rfcoding.vibeplayer.feature.library.presentation.playlistname.PlaylistNameViewModel
@@ -15,4 +16,6 @@ val libraryPresentationModule = module {
     // Its PlaylistNameMode comes from parametersOf in PlaylistNameSheetRoot.
     viewModelOf(::PlaylistNameViewModel)
     viewModelOf(::ScanMusicViewModel)
+    // Its playlistId comes from parametersOf in AddSongsRoot.
+    viewModelOf(::AddSongsViewModel)
 }

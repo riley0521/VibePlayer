@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,6 +27,7 @@ private val MessageMaxWidth = 400.dp
  * [PermissionRationale] variants draw the same sheet; only the button changes, because after a
  * second denial asking again is a no-op and the user has to go through system Settings.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PermissionRationaleSheet(
     rationale: PermissionRationale,

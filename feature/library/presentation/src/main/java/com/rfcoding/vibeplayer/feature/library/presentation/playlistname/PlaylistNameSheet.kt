@@ -7,10 +7,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -26,6 +30,7 @@ import com.rfcoding.vibeplayer.core.presentation.VibeBottomSheet
 import com.rfcoding.vibeplayer.feature.library.domain.PlaylistNameValidator
 import com.rfcoding.vibeplayer.feature.library.presentation.R
 import com.rfcoding.vibeplayer.feature.library.presentation.components.SheetPreviewSurface
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -33,6 +38,7 @@ import org.koin.core.parameter.parametersOf
  * Hosts [PlaylistNameViewModel]; call it inside `DialogSheetScopedViewModel` so each opening of the
  * sheet gets a fresh ViewModel for [mode].
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlaylistNameSheetRoot(
     mode: PlaylistNameMode,
@@ -42,10 +48,17 @@ fun PlaylistNameSheetRoot(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val sheetState = rememberModalBottomSheetState()
 
     ObserveAsEvents(viewModel.events) { event ->
         when (event) {
-            is PlaylistNameEvent.PlaylistCreated -> onPlaylistCreated(event.playlistId)
+            is PlaylistNameEvent.PlaylistCreated -> {
+                scope.launch {
+                    sheetState.hide()
+                    onPlaylistCreated(event.playlistId)
+                }
+            }
             PlaylistNameEvent.PlaylistRenamed -> onDismiss()
             is PlaylistNameEvent.Error -> {
                 Toast.makeText(context, event.message.asString(context), Toast.LENGTH_LONG).show()
@@ -62,6 +75,7 @@ fun PlaylistNameSheetRoot(
             }
         },
         onDismiss = onDismiss,
+        sheetState = sheetState,
     )
 }
 
@@ -71,14 +85,20 @@ fun PlaylistNameSheetRoot(
  * disabled it is dim and unfilled, enabled it is the purple pill with a glow, both baked into
  * [VibeButton].
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlaylistNameSheet(
     state: PlaylistNameState,
     onAction: (PlaylistNameAction) -> Unit,
     onDismiss: () -> Unit,
+    sheetState: SheetState,
     modifier: Modifier = Modifier,
 ) {
-    VibeBottomSheet(onDismiss = onDismiss, modifier = modifier) {
+    VibeBottomSheet(
+        onDismiss = onDismiss,
+        sheetState = sheetState,
+        modifier = modifier
+    ) {
         PlaylistNameSheetContent(state = state, onAction = onAction)
     }
 }

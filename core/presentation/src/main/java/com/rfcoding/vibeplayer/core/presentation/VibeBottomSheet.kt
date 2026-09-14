@@ -5,6 +5,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -29,13 +30,14 @@ val VibeBottomSheetShape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
 fun VibeBottomSheet(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
+    sheetState: SheetState = rememberModalBottomSheetState(),
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val isMobile = currentDeviceConfiguration().isMobile
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         modifier = modifier,
-        sheetState = rememberModalBottomSheetState(),
+        sheetState = sheetState,
         // Unspecified lets the sheet fill a phone; Material's default would cap it at 640dp.
         sheetMaxWidth = if (isMobile) Dp.Unspecified else TabletSheetWidth,
         shape = VibeBottomSheetShape,

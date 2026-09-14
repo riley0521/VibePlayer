@@ -16,6 +16,9 @@ class FakePlaylistLocalDataSource : PlaylistLocalDataSource {
     /** When set, every write fails with it and leaves [playlists] untouched. */
     var error: DataError.Local? = null
 
+    /** Song ids passed to [addSongsToPlaylist], by playlist; the fake has no songs to attach them to. */
+    val addedSongIds = mutableMapOf<Long, List<String>>()
+
     override fun observePlaylists(): Flow<List<Playlist>> = playlists
 
     override fun observePlaylist(playlistId: Long): Flow<Playlist?> {
@@ -44,6 +47,8 @@ class FakePlaylistLocalDataSource : PlaylistLocalDataSource {
     }
 
     override suspend fun addSongsToPlaylist(playlistId: Long, songIds: List<String>): EmptyResult<DataError.Local> {
+        error?.let { return Result.Error(it) }
+        addedSongIds[playlistId] = addedSongIds[playlistId].orEmpty() + songIds
         return Result.Success(Unit)
     }
 

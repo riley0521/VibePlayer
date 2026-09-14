@@ -63,6 +63,7 @@ private val TabletMiniPlayerWidth = 480.dp
 @Composable
 fun LibraryRoot(
     onScanClick: () -> Unit,
+    onPlaylistCreated: (playlistId: Long) -> Unit,
     viewModel: LibraryViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -98,8 +99,7 @@ fun LibraryRoot(
         },
         playlistsTab = {
             PlaylistRoot(
-                // TODO: navigate to the Add songs screen once it has a route.
-                onPlaylistCreated = {},
+                onPlaylistCreated = onPlaylistCreated,
             )
         }
     )

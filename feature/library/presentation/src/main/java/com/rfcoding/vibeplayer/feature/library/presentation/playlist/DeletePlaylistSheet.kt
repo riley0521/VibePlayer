@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,6 +29,7 @@ private val MessageMaxWidth = 400.dp
  * Figma "Main Page - Playlist + Action Sheet - Delete". It is drawn as another bottom sheet rather
  * than a dialog, so it reuses the same shell as the action sheet it replaces.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DeletePlaylistSheet(
     sheet: PlaylistSheet.DeletePlaylist,

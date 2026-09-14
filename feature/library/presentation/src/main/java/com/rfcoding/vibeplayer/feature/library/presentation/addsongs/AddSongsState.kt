@@ -9,6 +9,7 @@ data class AddSongsState(
     /** Already filtered for [query]; an empty query keeps every song, as on the Search screen. */
     val songs: List<SongUi> = emptyList(),
     val selectedSongIds: Set<String> = emptySet(),
+    val isSaving: Boolean = false,
 ) {
     val selectedCount: Int get() = selectedSongIds.size
 

@@ -40,7 +40,8 @@ class ScopedStoreRegistryViewModel : ViewModel() {
 
 /**
  * Gives a dialog or bottom sheet its own ViewModel scope: ViewModels created in [content] live while
- * [visible] is true and are cleared once it turns false.
+ * [visible] is true and are cleared whenever it is false, including a scope left behind when the host
+ * left composition while it was still visible.
  *
  * @param scopeId Pass the scopeId from the outside if you want the same instance of the Dialog or
  * Bottom sheet with the same ViewModel instance.
@@ -63,7 +64,10 @@ fun DialogSheetScopedViewModel(
     LaunchedEffect(visible, scopeId) {
         if (visible && owner == null) {
             owner = ScopedViewModelStoreOwner(registry.getOrCreate(scopeId), parentOwner)
-        } else if (!visible && owner != null) {
+        } else if (!visible) {
+            // Not only when this composition opened the scope: navigating away stops lifecycle-aware
+            // collection before the close arrives, so the host can leave composition with the scope
+            // still open and come back with `owner` reset but the same saved scopeId.
             registry.clear(scopeId)
             owner = null
         }

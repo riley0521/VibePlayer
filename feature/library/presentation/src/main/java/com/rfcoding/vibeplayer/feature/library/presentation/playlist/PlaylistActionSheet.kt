@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
@@ -23,6 +24,7 @@ import com.rfcoding.vibeplayer.feature.library.presentation.components.SheetPrev
  * actions. The Favourites variant keeps only Play, because a virtual playlist can't be renamed,
  * re-covered or deleted.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlaylistActionSheet(
     sheet: PlaylistSheet.PlaylistActions,
