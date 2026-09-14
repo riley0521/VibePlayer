@@ -6,16 +6,21 @@ import com.rfcoding.vibeplayer.core.domain.song.Song
 import com.rfcoding.vibeplayer.core.domain.song.SongLocalDataSource
 import com.rfcoding.vibeplayer.core.domain.util.DataError
 import com.rfcoding.vibeplayer.core.domain.util.EmptyResult
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.shareIn
 
 class RoomSongDataSource(
     private val songDao: SongDao,
+    private val applicationScope: CoroutineScope
 ) : SongLocalDataSource {
 
-    override fun observeSongs(): Flow<List<Song>> {
-        return songDao.observeSongs().map { songs -> songs.map { it.toSong() } }
-    }
+    override val songs: Flow<List<Song>> = songDao
+        .observeSongs()
+        .map { songs -> songs.map { it.toSong() } }
+        .shareIn(applicationScope, SharingStarted.Lazily, replay = 1)
 
     override fun observeFavoriteSongs(): Flow<List<Song>> {
         return songDao.observeFavoriteSongs().map { songs -> songs.map { it.toSong() } }

@@ -1,10 +1,13 @@
-package com.rfcoding.vibeplayer.feature.library.presentation.library
+package com.rfcoding.vibeplayer.feature.library.presentation.playlist
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -12,12 +15,13 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rfcoding.vibeplayer.core.designsystem.components.PlaylistArtwork
 import com.rfcoding.vibeplayer.core.designsystem.components.PlaylistCard
 import com.rfcoding.vibeplayer.core.designsystem.components.VibeButton
@@ -25,35 +29,70 @@ import com.rfcoding.vibeplayer.core.designsystem.components.VibeButtonStyle
 import com.rfcoding.vibeplayer.core.designsystem.components.VibeIconButton
 import com.rfcoding.vibeplayer.core.designsystem.icons.VibeIcons
 import com.rfcoding.vibeplayer.core.designsystem.theme.bodyLargeMedium
+import com.rfcoding.vibeplayer.core.presentation.MiniPlayerHeight
 import com.rfcoding.vibeplayer.core.presentation.PlaylistUi
+import com.rfcoding.vibeplayer.core.presentation.currentDeviceConfiguration
 import com.rfcoding.vibeplayer.feature.library.presentation.R
+import com.rfcoding.vibeplayer.feature.library.presentation.playlistname.PlaylistNameSheet
+import org.koin.androidx.compose.koinViewModel
+
+@Composable
+internal fun PlaylistRoot(
+    viewModel: PlaylistViewModel = koinViewModel()
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+
+    PlaylistScreen(
+        state = state,
+        onAction = viewModel::onAction
+    )
+
+    val onSheetDismiss = { viewModel.onAction(PlaylistAction.OnSheetDismiss) }
+    when (val sheet = state.activeSheet) {
+        null -> Unit
+        is PlaylistSheet.PlaylistActions -> PlaylistActionSheet(
+            sheet = sheet,
+            onAction = viewModel::onAction,
+            onDismiss = onSheetDismiss,
+        )
+        is PlaylistSheet.DeletePlaylist -> DeletePlaylistSheet(
+            sheet = sheet,
+            onAction = viewModel::onAction,
+            onDismiss = onSheetDismiss,
+        )
+        is PlaylistSheet.PlaylistName -> PlaylistNameSheet(
+            state = sheet.state,
+            onAction = { viewModel.onAction(PlaylistAction.OnPlaylistNameAction(it)) },
+            onDismiss = onSheetDismiss,
+        )
+    }
+}
 
 /**
  * Figma "Main Page - Playlist Tab": the virtual Favourites card sits above the "My Playlists" section,
  * which either lists the user's playlists or offers the Create playlist button.
  *
- * Unlike [LibrarySongsTab] the horizontal padding lives on each item rather than on the list's
+ * Unlike [com.rfcoding.vibeplayer.feature.library.presentation.songs.SongsScreen] the horizontal padding lives on each item rather than on the list's
  * `contentPadding`, because the header rows use a narrower end inset than the cards (the trailing icon
  * button's 44dp touch target overhangs) and because the card dividers must stop at the content width.
  */
 @Composable
-internal fun LibraryPlaylistTab(
-    state: LibraryState,
-    isMobile: Boolean,
-    bottomContentPadding: Dp,
-    onAction: (LibraryAction) -> Unit,
-    modifier: Modifier = Modifier,
+internal fun PlaylistScreen(
+    state: PlaylistState,
+    onAction: (PlaylistAction) -> Unit
 ) {
-    // The tab owns its scroll state; the one LibraryScreen hoists belongs to the Songs tab's FAB.
+    // The tab owns its scroll state; the one LibraryRoot hoists belongs to the Songs tab's FAB.
     val listState = rememberLazyListState()
+    val isMobile = currentDeviceConfiguration().isMobile
     val cardPadding = if (isMobile) 16.dp else 24.dp
     val headerPadding = PaddingValues(
         start = cardPadding,
         end = if (isMobile) 12.dp else 20.dp,
     )
+    val bottomContentPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + MiniPlayerHeight
 
     LazyColumn(
-        modifier = modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
         state = listState,
         contentPadding = PaddingValues(bottom = bottomContentPadding),
     ) {
@@ -69,7 +108,7 @@ internal fun LibraryPlaylistTab(
                 VibeIconButton(
                     icon = VibeIcons.Plus,
                     contentDescription = stringResource(R.string.create_playlist),
-                    onClick = { onAction(LibraryAction.OnCreatePlaylistClick) },
+                    onClick = { onAction(PlaylistAction.OnCreatePlaylistClick) },
                 )
             }
         }
@@ -82,8 +121,8 @@ internal fun LibraryPlaylistTab(
                     state.favouriteSongCount,
                 ),
                 artwork = PlaylistArtwork.Favourites,
-                onClick = { onAction(LibraryAction.OnFavouritesClick) },
-                onMenuClick = { onAction(LibraryAction.OnFavouritesMenuClick) },
+                onClick = { onAction(PlaylistAction.OnFavouritesClick) },
+                onMenuClick = { onAction(PlaylistAction.OnFavouritesMenuClick) },
                 modifier = Modifier.padding(horizontal = cardPadding),
             )
         }
@@ -97,7 +136,7 @@ internal fun LibraryPlaylistTab(
             item(key = "create") {
                 VibeButton(
                     text = stringResource(R.string.create_playlist),
-                    onClick = { onAction(LibraryAction.OnCreatePlaylistClick) },
+                    onClick = { onAction(PlaylistAction.OnCreatePlaylistClick) },
                     style = VibeButtonStyle.Outlined,
                     leadingIcon = VibeIcons.Plus,
                     modifier = Modifier
@@ -116,8 +155,8 @@ internal fun LibraryPlaylistTab(
                         playlist.songCount,
                     ),
                     artwork = playlist.imageUri?.let(PlaylistArtwork::Image) ?: PlaylistArtwork.Default,
-                    onClick = { onAction(LibraryAction.OnPlaylistClick(playlist.id)) },
-                    onMenuClick = { onAction(LibraryAction.OnPlaylistMenuClick(playlist.id)) },
+                    onClick = { onAction(PlaylistAction.OnPlaylistClick(playlist.id)) },
+                    onMenuClick = { onAction(PlaylistAction.OnPlaylistMenuClick(playlist.id)) },
                     modifier = Modifier.padding(horizontal = cardPadding),
                 )
             }
@@ -126,7 +165,7 @@ internal fun LibraryPlaylistTab(
 }
 
 /** Favourites is always listed, so it counts towards the total the user sees. */
-private val LibraryState.totalPlaylistCount: Int
+private val PlaylistState.totalPlaylistCount: Int
     get() = playlists.size + 1
 
 @Composable

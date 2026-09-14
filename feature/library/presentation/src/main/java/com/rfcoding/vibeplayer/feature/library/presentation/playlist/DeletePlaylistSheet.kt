@@ -1,4 +1,4 @@
-package com.rfcoding.vibeplayer.feature.library.presentation.library
+package com.rfcoding.vibeplayer.feature.library.presentation.playlist
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -30,8 +30,8 @@ private val MessageMaxWidth = 400.dp
  */
 @Composable
 fun DeletePlaylistSheet(
-    sheet: LibrarySheet.DeletePlaylist,
-    onAction: (LibraryAction) -> Unit,
+    sheet: PlaylistSheet.DeletePlaylist,
+    onAction: (PlaylistAction) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -42,8 +42,8 @@ fun DeletePlaylistSheet(
 
 @Composable
 internal fun DeletePlaylistSheetContent(
-    sheet: LibrarySheet.DeletePlaylist,
-    onAction: (LibraryAction) -> Unit,
+    sheet: PlaylistSheet.DeletePlaylist,
+    onAction: (PlaylistAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -79,13 +79,13 @@ internal fun DeletePlaylistSheetContent(
         ) {
             VibeButton(
                 text = stringResource(R.string.cancel),
-                onClick = { onAction(LibraryAction.OnSheetDismiss) },
+                onClick = { onAction(PlaylistAction.OnSheetDismiss) },
                 style = VibeButtonStyle.Outlined,
                 modifier = Modifier.weight(1f),
             )
             VibeButton(
                 text = stringResource(R.string.action_delete),
-                onClick = { onAction(LibraryAction.OnConfirmDeletePlaylistClick(sheet.playlist.id)) },
+                onClick = { onAction(PlaylistAction.OnConfirmDeletePlaylistClick(sheet.playlist.id)) },
                 style = VibeButtonStyle.Destructive,
                 modifier = Modifier.weight(1f),
             )
@@ -99,7 +99,7 @@ internal fun DeletePlaylistSheetContent(
 private fun DeletePlaylistSheetPreview() {
     SheetPreviewSurface {
         DeletePlaylistSheetContent(
-            sheet = LibrarySheet.DeletePlaylist(playlist = PreviewPlaylists.first()),
+            sheet = PlaylistSheet.DeletePlaylist(playlist = PreviewPlaylists.first()),
             onAction = {},
         )
     }

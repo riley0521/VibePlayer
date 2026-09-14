@@ -103,7 +103,7 @@ class MediaStoreMusicLibraryRepositoryTest {
         var syncResult: EmptyResult<DataError.Local> = Result.Success(Unit)
         val syncedSongs = mutableListOf<List<Song>>()
 
-        override fun observeSongs(): Flow<List<Song>> = emptyFlow()
+        override val songs: Flow<List<Song>> = emptyFlow()
         override fun observeFavoriteSongs(): Flow<List<Song>> = emptyFlow()
         override suspend fun setFavorite(songId: String, isFavorite: Boolean) = Result.Success(Unit)
 

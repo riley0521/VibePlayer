@@ -10,19 +10,18 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 
 class FakeSongLocalDataSource : SongLocalDataSource {
-    val songs = MutableStateFlow<List<Song>>(emptyList())
+    val songsMutable = MutableStateFlow<List<Song>>(emptyList())
+    override val songs: Flow<List<Song>> = songsMutable
 
-    override fun observeSongs(): Flow<List<Song>> = songs
-
-    override fun observeFavoriteSongs(): Flow<List<Song>> = songs.map { all -> all.filter { it.isFavorite } }
+    override fun observeFavoriteSongs(): Flow<List<Song>> = songsMutable.map { all -> all.filter { it.isFavorite } }
 
     override suspend fun setFavorite(songId: String, isFavorite: Boolean): EmptyResult<DataError.Local> {
-        songs.value = songs.value.map { if (it.id == songId) it.copy(isFavorite = isFavorite) else it }
+        songsMutable.value = songsMutable.value.map { if (it.id == songId) it.copy(isFavorite = isFavorite) else it }
         return Result.Success(Unit)
     }
 
     override suspend fun syncScannedSongs(songs: List<Song>): EmptyResult<DataError.Local> {
-        this.songs.value = songs
+        this.songsMutable.value = songs
         return Result.Success(Unit)
     }
 }

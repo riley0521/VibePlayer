@@ -11,9 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
@@ -48,10 +46,13 @@ import com.rfcoding.vibeplayer.core.designsystem.theme.VibePlayerTheme
 import com.rfcoding.vibeplayer.core.presentation.MiniPlayer
 import com.rfcoding.vibeplayer.core.presentation.MiniPlayerHeight
 import com.rfcoding.vibeplayer.core.presentation.ObserveAsEvents
-import com.rfcoding.vibeplayer.core.presentation.SongUi
 import com.rfcoding.vibeplayer.core.presentation.currentDeviceConfiguration
 import com.rfcoding.vibeplayer.feature.library.presentation.R
-import com.rfcoding.vibeplayer.feature.library.presentation.playlistname.PlaylistNameSheet
+import com.rfcoding.vibeplayer.feature.library.presentation.playlist.PlaylistRoot
+import com.rfcoding.vibeplayer.feature.library.presentation.songs.PreviewSongs
+import com.rfcoding.vibeplayer.feature.library.presentation.songs.SongsRoot
+import com.rfcoding.vibeplayer.feature.library.presentation.songs.SongsScreen
+import com.rfcoding.vibeplayer.feature.library.presentation.songs.SongsState
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
@@ -75,6 +76,13 @@ fun LibraryRoot(
         }
     }
 
+    val listState = rememberLazyListState()
+    val showScrollToTop by remember {
+        derivedStateOf {
+            listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0
+        }
+    }
+
     LibraryScreen(
         state = state,
         onAction = { action ->
@@ -83,6 +91,14 @@ fun LibraryRoot(
                 else -> viewModel.onAction(action)
             }
         },
+        listState = listState,
+        showScrollToTop = showScrollToTop,
+        songsTab = {
+            SongsRoot(listState = listState)
+        },
+        playlistsTab = {
+            PlaylistRoot()
+        }
     )
 }
 
@@ -90,17 +106,14 @@ fun LibraryRoot(
 fun LibraryScreen(
     state: LibraryState,
     onAction: (LibraryAction) -> Unit,
+    listState: LazyListState,
+    showScrollToTop: Boolean,
     modifier: Modifier = Modifier,
+    songsTab: @Composable () -> Unit,
+    playlistsTab: @Composable () -> Unit
 ) {
     val isMobile = currentDeviceConfiguration().isMobile
-    val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
-    val showScrollToTop by remember {
-        derivedStateOf {
-            listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0
-        }
-    }
-    val bottomInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     val hasMiniPlayer = state.nowPlaying != null
 
     Scaffold(
@@ -146,11 +159,11 @@ fun LibraryScreen(
                     state = state,
                     onAction = onAction,
                     isMobile = isMobile,
-                    listState = listState,
-                    bottomContentPadding = bottomInset + if (hasMiniPlayer) MiniPlayerHeight else 0.dp,
                     // Figma's "Rectangle 5". It sits on the list only: the modifier paints over every
                     // child of the node it's applied to, so the FAB and mini player must stay outside.
                     modifier = Modifier.bottomFade(MaterialTheme.colorScheme.background),
+                    songsTab = songsTab,
+                    playlistsTab = playlistsTab
                 )
             }
 
@@ -193,26 +206,6 @@ fun LibraryScreen(
             }
         }
     }
-
-    val onSheetDismiss = { onAction(LibraryAction.OnSheetDismiss) }
-    when (val sheet = state.activeSheet) {
-        null -> Unit
-        is LibrarySheet.PlaylistActions -> PlaylistActionSheet(
-            sheet = sheet,
-            onAction = onAction,
-            onDismiss = onSheetDismiss,
-        )
-        is LibrarySheet.DeletePlaylist -> DeletePlaylistSheet(
-            sheet = sheet,
-            onAction = onAction,
-            onDismiss = onSheetDismiss,
-        )
-        is LibrarySheet.PlaylistName -> PlaylistNameSheet(
-            state = sheet.state,
-            onAction = { onAction(LibraryAction.OnPlaylistNameAction(it)) },
-            onDismiss = onSheetDismiss,
-        )
-    }
 }
 
 /** Figma keeps the FAB 12dp above the mini player, and otherwise 36dp (mobile) / 20dp up. */
@@ -227,9 +220,9 @@ private fun LoadedContent(
     state: LibraryState,
     onAction: (LibraryAction) -> Unit,
     isMobile: Boolean,
-    listState: LazyListState,
-    bottomContentPadding: Dp,
     modifier: Modifier = Modifier,
+    songsTab: @Composable () -> Unit,
+    playlistsTab: @Composable () -> Unit
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         VibeTabRow(
@@ -239,19 +232,8 @@ private fun LoadedContent(
             stretchTabs = isMobile,
         )
         when (state.selectedTab) {
-            LibraryTab.Songs -> LibrarySongsTab(
-                songs = state.songs,
-                listState = listState,
-                isMobile = isMobile,
-                bottomContentPadding = bottomContentPadding,
-                onAction = onAction,
-            )
-            LibraryTab.Playlist -> LibraryPlaylistTab(
-                state = state,
-                isMobile = isMobile,
-                bottomContentPadding = bottomContentPadding,
-                onAction = onAction,
-            )
+            LibraryTab.Songs -> songsTab()
+            LibraryTab.Playlist -> playlistsTab()
         }
     }
 }
@@ -308,20 +290,6 @@ private fun NoMusicFoundContent(
     }
 }
 
-private val PreviewSongs = listOf(
-    SongUi("505.mp3", "505", "Arctic Monkeys", null, 254_000),
-    SongUi("do-i-wanna-know.mp3", "Do I Wanna Know?", "Arctic Monkeys", null, 272_000),
-    SongUi("mr-brightside.mp3", "Mr. Brightside", "The Killers", null, 222_000),
-    SongUi("somebody-told-me.mp3", "Somebody Told Me", "The Killers", null, 199_000),
-    SongUi("take-me-out.mp3", "Take Me Out", "Franz Ferdinand", null, 237_000),
-    SongUi("last-nite.mp3", "Last Nite", "The Strokes", null, 192_000),
-    SongUi("house-of-the-rising-sun.mp3", "House of the Rising Sun", null, null, 269_000),
-    SongUi("house-of-the-rising-sun1.mp3", "House of the Rising Sun", null, null, 269_000),
-    SongUi("house-of-the-rising-sun2.mp3", "House of the Rising Sun", null, null, 269_000),
-    SongUi("house-of-the-rising-sun3.mp3", "House of the Rising Sun", null, null, 269_000),
-    SongUi("house-of-the-rising-sun4.mp3", "House of the Rising Sun", null, null, 269_000),
-)
-
 private val PreviewNowPlaying = NowPlayingUi(song = PreviewSongs.first())
 
 @Preview(name = "Mobile", widthDp = 412, heightDp = 917)
@@ -332,6 +300,10 @@ private fun LibraryScreenScanningPreview() {
         LibraryScreen(
             state = LibraryState(status = LibraryStatus.Scanning),
             onAction = {},
+            listState = rememberLazyListState(),
+            showScrollToTop = false,
+            songsTab = {},
+            playlistsTab = {}
         )
     }
 }
@@ -344,6 +316,10 @@ private fun LibraryScreenNoMusicFoundPreview() {
         LibraryScreen(
             state = LibraryState(status = LibraryStatus.NoMusicFound),
             onAction = {},
+            listState = rememberLazyListState(),
+            showScrollToTop = false,
+            songsTab = {},
+            playlistsTab = {}
         )
     }
 }
@@ -352,10 +328,15 @@ private fun LibraryScreenNoMusicFoundPreview() {
 @Preview(name = "Tablet", widthDp = 840, heightDp = 917)
 @Composable
 private fun LibraryScreenSongsPreview() {
+    val listState = rememberLazyListState()
     VibePlayerTheme {
         LibraryScreen(
-            state = LibraryState(status = LibraryStatus.Loaded, songs = PreviewSongs),
+            state = LibraryState(status = LibraryStatus.Loaded),
             onAction = {},
+            listState = listState,
+            showScrollToTop = false,
+            songsTab = { PreviewSongsTab(listState) },
+            playlistsTab = {}
         )
     }
 }
@@ -368,11 +349,13 @@ private fun LibraryScreenNoPlaylistPreview() {
         LibraryScreen(
             state = LibraryState(
                 status = LibraryStatus.Loaded,
-                songs = PreviewSongs,
-                selectedTab = LibraryTab.Playlist,
-                favouriteSongCount = 2,
+                selectedTab = LibraryTab.Playlist
             ),
             onAction = {},
+            listState = rememberLazyListState(),
+            showScrollToTop = false,
+            songsTab = {},
+            playlistsTab = {}
         )
     }
 }
@@ -385,12 +368,13 @@ private fun LibraryScreenHavePlaylistPreview() {
         LibraryScreen(
             state = LibraryState(
                 status = LibraryStatus.Loaded,
-                songs = PreviewSongs,
-                selectedTab = LibraryTab.Playlist,
-                favouriteSongCount = 2,
-                playlists = PreviewPlaylists,
+                selectedTab = LibraryTab.Playlist
             ),
             onAction = {},
+            listState = rememberLazyListState(),
+            showScrollToTop = false,
+            songsTab = {},
+            playlistsTab = {}
         )
     }
 }
@@ -399,14 +383,18 @@ private fun LibraryScreenHavePlaylistPreview() {
 @Preview(name = "Tablet", widthDp = 840, heightDp = 917)
 @Composable
 private fun LibraryScreenMiniPlayerPausedPreview() {
+    val listState = rememberLazyListState()
     VibePlayerTheme {
         LibraryScreen(
             state = LibraryState(
                 status = LibraryStatus.Loaded,
-                songs = PreviewSongs,
                 nowPlaying = PreviewNowPlaying,
             ),
             onAction = {},
+            listState = listState,
+            showScrollToTop = false,
+            songsTab = { PreviewSongsTab(listState) },
+            playlistsTab = {}
         )
     }
 }
@@ -415,11 +403,11 @@ private fun LibraryScreenMiniPlayerPausedPreview() {
 @Preview(name = "Tablet", widthDp = 840, heightDp = 917)
 @Composable
 private fun LibraryScreenMiniPlayerPlayingPreview() {
+    val listState = rememberLazyListState()
     VibePlayerTheme {
         LibraryScreen(
             state = LibraryState(
                 status = LibraryStatus.Loaded,
-                songs = PreviewSongs,
                 nowPlaying = NowPlayingUi(
                     song = PreviewSongs[2],
                     isPlaying = true,
@@ -428,6 +416,19 @@ private fun LibraryScreenMiniPlayerPlayingPreview() {
                 ),
             ),
             onAction = {},
+            listState = listState,
+            showScrollToTop = false,
+            songsTab = { PreviewSongsTab(listState) },
+            playlistsTab = {}
         )
     }
+}
+
+@Composable
+private fun PreviewSongsTab(listState: LazyListState) {
+    SongsScreen(
+        state = SongsState(songs = PreviewSongs),
+        listState = listState,
+        onAction = {},
+    )
 }

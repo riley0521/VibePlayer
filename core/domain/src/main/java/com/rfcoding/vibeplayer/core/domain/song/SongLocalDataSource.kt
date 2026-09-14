@@ -5,7 +5,12 @@ import com.rfcoding.vibeplayer.core.domain.util.EmptyResult
 import kotlinx.coroutines.flow.Flow
 
 interface SongLocalDataSource {
-    fun observeSongs(): Flow<List<Song>>
+
+    /**
+     * This will be a SharedFlow because LibraryScreen and SongsScreen will observe this.
+     * We need shared instance of this flow.
+     */
+    val songs: Flow<List<Song>>
     fun observeFavoriteSongs(): Flow<List<Song>>
     suspend fun setFavorite(songId: String, isFavorite: Boolean): EmptyResult<DataError.Local>
 

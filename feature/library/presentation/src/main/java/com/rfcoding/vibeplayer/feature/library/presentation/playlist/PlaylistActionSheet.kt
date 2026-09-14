@@ -1,4 +1,4 @@
-package com.rfcoding.vibeplayer.feature.library.presentation.library
+package com.rfcoding.vibeplayer.feature.library.presentation.playlist
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -25,8 +25,8 @@ import com.rfcoding.vibeplayer.feature.library.presentation.components.SheetPrev
  */
 @Composable
 fun PlaylistActionSheet(
-    sheet: LibrarySheet.PlaylistActions,
-    onAction: (LibraryAction) -> Unit,
+    sheet: PlaylistSheet.PlaylistActions,
+    onAction: (PlaylistAction) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -37,8 +37,8 @@ fun PlaylistActionSheet(
 
 @Composable
 internal fun PlaylistActionSheetContent(
-    sheet: LibrarySheet.PlaylistActions,
-    onAction: (LibraryAction) -> Unit,
+    sheet: PlaylistSheet.PlaylistActions,
+    onAction: (PlaylistAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -71,17 +71,17 @@ internal fun PlaylistActionSheetContent(
             VibeActionSheetButton(
                 text = stringResource(R.string.action_rename),
                 icon = VibeIcons.Pen,
-                onClick = { onAction(LibraryAction.OnRenamePlaylistClick(playlist.id)) },
+                onClick = { onAction(PlaylistAction.OnRenamePlaylistClick(playlist.id)) },
             )
             VibeActionSheetButton(
                 text = stringResource(R.string.action_change_cover),
                 icon = VibeIcons.ImageEdit,
-                onClick = { onAction(LibraryAction.OnChangePlaylistCoverClick(playlist.id)) },
+                onClick = { onAction(PlaylistAction.OnChangePlaylistCoverClick(playlist.id)) },
             )
             VibeActionSheetButton(
                 text = stringResource(R.string.action_delete),
                 icon = VibeIcons.Bin,
-                onClick = { onAction(LibraryAction.OnDeletePlaylistClick(playlist.id)) },
+                onClick = { onAction(PlaylistAction.OnDeletePlaylistClick(playlist.id)) },
             )
         }
     }
@@ -93,7 +93,7 @@ internal fun PlaylistActionSheetContent(
 private fun PlaylistActionSheetPreview() {
     SheetPreviewSurface {
         PlaylistActionSheetContent(
-            sheet = LibrarySheet.PlaylistActions(playlist = PreviewPlaylists.first()),
+            sheet = PlaylistSheet.PlaylistActions(playlist = PreviewPlaylists.first()),
             onAction = {},
         )
     }
@@ -105,7 +105,7 @@ private fun PlaylistActionSheetPreview() {
 private fun FavouritesActionSheetPreview() {
     SheetPreviewSurface {
         PlaylistActionSheetContent(
-            sheet = LibrarySheet.PlaylistActions(playlist = null, favouriteSongCount = 24),
+            sheet = PlaylistSheet.PlaylistActions(playlist = null, favouriteSongCount = 24),
             onAction = {},
         )
     }
