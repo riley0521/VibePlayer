@@ -1,6 +1,7 @@
 package com.rfcoding.vibeplayer.core.player
 
 import android.app.PendingIntent
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.annotation.OptIn
@@ -74,13 +75,20 @@ class PlaybackService : MediaSessionService() {
             .build()
 
         val sessionBuilder = MediaSession.Builder(this, player).setCallback(SessionCallback())
-        // :core:player can't see MainActivity, so the notification opens the app's launcher activity.
-        packageManager.getLaunchIntentForPackage(packageName)?.let { launchIntent ->
+        // :core:player can't see MainActivity, so the notification targets the app's launcher activity
+        // and asks it to open the Player. SINGLE_TOP | CLEAR_TOP hands the tap to a running activity
+        // through onNewIntent instead of stacking a second one.
+        packageManager.getLaunchIntentForPackage(packageName)?.component?.let { launcher ->
+            val openPlayerIntent = Intent(PlayerIntents.ACTION_OPEN_PLAYER)
+                .setComponent(launcher)
+                .addFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP,
+                )
             sessionBuilder.setSessionActivity(
                 PendingIntent.getActivity(
                     this,
                     0,
-                    launchIntent,
+                    openPlayerIntent,
                     PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
                 ),
             )
