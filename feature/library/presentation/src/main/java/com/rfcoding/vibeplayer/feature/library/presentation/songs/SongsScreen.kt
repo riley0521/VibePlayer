@@ -15,27 +15,21 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rfcoding.vibeplayer.core.designsystem.components.SongCard
-import com.rfcoding.vibeplayer.core.designsystem.components.VibeButton
-import com.rfcoding.vibeplayer.core.designsystem.components.VibeButtonStyle
-import com.rfcoding.vibeplayer.core.designsystem.icons.VibeIcons
 import com.rfcoding.vibeplayer.core.designsystem.theme.VibePlayerTheme
-import com.rfcoding.vibeplayer.core.designsystem.theme.bodyLargeMedium
 import com.rfcoding.vibeplayer.core.presentation.MiniPlayerHeight
 import com.rfcoding.vibeplayer.core.presentation.SongUi
 import com.rfcoding.vibeplayer.core.presentation.currentDeviceConfiguration
-import com.rfcoding.vibeplayer.feature.library.presentation.R
+import com.rfcoding.vibeplayer.feature.library.presentation.components.PlayButton
+import com.rfcoding.vibeplayer.feature.library.presentation.components.ShuffleButton
+import com.rfcoding.vibeplayer.feature.library.presentation.components.SongCountText
 import org.koin.androidx.compose.koinViewModel
 
 /**
@@ -134,38 +128,6 @@ private fun SongsHeader(
             SongCountText(songCount = songCount)
         }
     }
-}
-
-@Composable
-private fun ShuffleButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    VibeButton(
-        text = stringResource(R.string.shuffle),
-        onClick = onClick,
-        style = VibeButtonStyle.Outlined,
-        leadingIcon = VibeIcons.Shuffle,
-        modifier = modifier,
-    )
-}
-
-@Composable
-private fun PlayButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    VibeButton(
-        text = stringResource(R.string.play),
-        onClick = onClick,
-        style = VibeButtonStyle.Outlined,
-        leadingIcon = VibeIcons.PlayLinear,
-        modifier = modifier,
-    )
-}
-
-@Composable
-private fun SongCountText(songCount: Int, modifier: Modifier = Modifier) {
-    Text(
-        text = pluralStringResource(R.plurals.songs_count, songCount, songCount),
-        style = MaterialTheme.typography.bodyLargeMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = modifier,
-    )
 }
 
 internal val PreviewSongs = listOf(

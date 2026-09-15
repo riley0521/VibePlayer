@@ -1,9 +1,9 @@
-package com.rfcoding.vibeplayer.feature.library.presentation.playlistname
+package com.rfcoding.vibeplayer.core.presentation.playlistname
 
+import com.rfcoding.vibeplayer.core.domain.playlist.PlaylistNameError
+import com.rfcoding.vibeplayer.core.domain.playlist.PlaylistNameValidator
+import com.rfcoding.vibeplayer.core.presentation.R
 import com.rfcoding.vibeplayer.core.presentation.UiText
-import com.rfcoding.vibeplayer.feature.library.domain.PlaylistNameError
-import com.rfcoding.vibeplayer.feature.library.domain.PlaylistNameValidator
-import com.rfcoding.vibeplayer.feature.library.presentation.R
 
 fun PlaylistNameError.toUiText(): UiText = when (this) {
     PlaylistNameError.BLANK -> UiText.StringResource(R.string.error_playlist_name_blank)

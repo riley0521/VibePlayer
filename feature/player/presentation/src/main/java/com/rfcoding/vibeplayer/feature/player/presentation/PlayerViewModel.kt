@@ -4,8 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rfcoding.vibeplayer.core.domain.player.MusicPlayer
 import com.rfcoding.vibeplayer.core.domain.player.RepeatMode
+import com.rfcoding.vibeplayer.core.domain.playlist.PlaylistLocalDataSource
 import com.rfcoding.vibeplayer.core.domain.song.SongLocalDataSource
 import com.rfcoding.vibeplayer.core.domain.util.onFailure
+import com.rfcoding.vibeplayer.core.domain.util.onSuccess
+import com.rfcoding.vibeplayer.core.presentation.UiText
 import com.rfcoding.vibeplayer.core.presentation.toSongUi
 import com.rfcoding.vibeplayer.core.presentation.toUiText
 import kotlinx.coroutines.channels.Channel
@@ -20,10 +23,14 @@ import kotlinx.coroutines.launch
 /**
  * Mirrors the playback session, plus the current song's favourite flag from the database. Shuffle is
  * performed by the playback service, which the media notification uses too, so both always agree.
+ *
+ * It also decides which sheet is open. The add-to-playlist sheet does its own writes; only a playlist
+ * created from it gets its song added here, because the shared create sheet knows nothing about songs.
  */
 class PlayerViewModel(
     private val musicPlayer: MusicPlayer,
     private val songDataSource: SongLocalDataSource,
+    private val playlistDataSource: PlaylistLocalDataSource,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(PlayerState())
@@ -59,9 +66,39 @@ class PlayerViewModel(
                 musicPlayer.setRepeatMode(musicPlayer.playbackState.value.repeatMode.next())
             }
             PlayerAction.OnFavoriteClick -> toggleFavorite()
-            // Navigation is handled by the Root. Seek and add to playlist come later.
-            else -> Unit
+            is PlayerAction.OnSeek -> seek(action.fraction)
+            PlayerAction.OnAddToPlaylistClick -> musicPlayer.playbackState.value.currentSong?.let { song ->
+                openSheet(PlayerSheet.AddToPlaylist(song.id))
+            }
+            PlayerAction.OnCreatePlaylistClick -> _state.value.activeSheet?.let { sheet ->
+                openSheet(PlayerSheet.CreatePlaylist(sheet.songId))
+            }
+            is PlayerAction.OnPlaylistCreated -> addToCreatedPlaylist(action.playlistId, action.name)
+            PlayerAction.OnSheetDismiss -> closeSheet()
+            // Handled by the Root.
+            PlayerAction.OnBackClick -> Unit
         }
+    }
+
+    private fun openSheet(sheet: PlayerSheet) = _state.update { it.copy(activeSheet = sheet) }
+
+    private fun closeSheet() = _state.update { it.copy(activeSheet = null) }
+
+    private fun addToCreatedPlaylist(playlistId: Long, name: String) {
+        val songId = (_state.value.activeSheet as? PlayerSheet.CreatePlaylist)?.songId ?: return
+        closeSheet()
+        viewModelScope.launch {
+            playlistDataSource.addSongsToPlaylist(playlistId, listOf(songId))
+                .onSuccess { eventChannel.send(PlayerEvent.AddedToPlaylist(UiText.DynamicString(name))) }
+                .onFailure { error -> eventChannel.send(PlayerEvent.Error(error.toUiText())) }
+        }
+    }
+
+    private fun seek(fraction: Float) {
+        val positionMillis = musicPlayer.playbackState.value.seekPositionFor(fraction) ?: return
+        // Shown straight away, so the released seek bar doesn't jump back until the session catches up.
+        _state.update { it.copy(positionMillis = positionMillis) }
+        viewModelScope.launch { musicPlayer.seekTo(positionMillis) }
     }
 
     private fun toggleFavorite() {

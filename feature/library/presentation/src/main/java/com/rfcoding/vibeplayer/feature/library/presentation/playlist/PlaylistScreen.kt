@@ -40,16 +40,19 @@ import com.rfcoding.vibeplayer.core.presentation.MiniPlayerHeight
 import com.rfcoding.vibeplayer.core.presentation.ObserveAsEvents
 import com.rfcoding.vibeplayer.core.presentation.PlaylistUi
 import com.rfcoding.vibeplayer.core.presentation.currentDeviceConfiguration
+import com.rfcoding.vibeplayer.core.presentation.playlistname.PlaylistNameSheetRoot
 import com.rfcoding.vibeplayer.feature.library.presentation.R
-import com.rfcoding.vibeplayer.feature.library.presentation.playlistname.PlaylistNameSheetRoot
 import org.koin.androidx.compose.koinViewModel
+import com.rfcoding.vibeplayer.core.presentation.R as PresentationR
 
 /**
  * @param onPlaylistCreated called with the new playlist's id once the create sheet has saved it.
+ * @param onPlaylistClick opens the Playlist Page; a null id is the virtual Favourites.
  */
 @Composable
 internal fun PlaylistRoot(
     onPlaylistCreated: (playlistId: Long) -> Unit,
+    onPlaylistClick: (playlistId: Long?) -> Unit,
     viewModel: PlaylistViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -82,7 +85,13 @@ internal fun PlaylistRoot(
 
     PlaylistScreen(
         state = state,
-        onAction = viewModel::onAction
+        onAction = { action ->
+            when (action) {
+                PlaylistAction.OnFavouritesClick -> onPlaylistClick(null)
+                is PlaylistAction.OnPlaylistClick -> onPlaylistClick(action.playlistId)
+                else -> viewModel.onAction(action)
+            }
+        }
     )
 
     val onSheetDismiss = { viewModel.onAction(PlaylistAction.OnSheetDismiss) }
@@ -107,7 +116,7 @@ internal fun PlaylistRoot(
             PlaylistNameSheetRoot(
                 mode = it.mode,
                 onDismiss = onSheetDismiss,
-                onPlaylistCreated = { playlistId ->
+                onPlaylistCreated = { playlistId, _ ->
                     onSheetDismiss()
                     onPlaylistCreated(playlistId)
                 },
@@ -162,9 +171,9 @@ internal fun PlaylistScreen(
         }
         item(key = "favourites") {
             PlaylistCard(
-                title = stringResource(R.string.favourites),
+                title = stringResource(PresentationR.string.favourites),
                 subtitle = pluralStringResource(
-                    R.plurals.playlist_song_count,
+                    PresentationR.plurals.playlist_song_count,
                     state.favouriteSongCount,
                     state.favouriteSongCount,
                 ),
@@ -198,7 +207,7 @@ internal fun PlaylistScreen(
                 PlaylistCard(
                     title = playlist.name,
                     subtitle = pluralStringResource(
-                        R.plurals.playlist_song_count,
+                        PresentationR.plurals.playlist_song_count,
                         playlist.songCount,
                         playlist.songCount,
                     ),

@@ -84,8 +84,12 @@ fun PlaylistCard(
     }
 }
 
+/**
+ * The artwork of a playlist, unclipped and unsized: the card draws it as a 64dp circle, the Playlist
+ * Page as a 200dp one.
+ */
 @Composable
-private fun PlaylistArtworkImage(
+fun PlaylistArtworkImage(
     artwork: PlaylistArtwork,
     modifier: Modifier = Modifier,
 ) {

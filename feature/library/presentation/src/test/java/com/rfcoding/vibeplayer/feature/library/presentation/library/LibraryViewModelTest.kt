@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.hasSize
+import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNull
@@ -200,5 +201,25 @@ class LibraryViewModelTest {
         assertThat(musicPlayer.togglePlayPauseCount).isEqualTo(1)
         assertThat(musicPlayer.skipToNextCount).isEqualTo(2)
         assertThat(musicPlayer.skipToPreviousCount).isEqualTo(1)
+    }
+
+    @Test
+    fun `seeking the mini player moves the song and shows the new position at once`() = runTest {
+        val viewModel = createViewModel()
+        musicPlayer.playbackState.value = PlaybackState(queue = listOf(song("a")), currentIndex = 0)
+
+        viewModel.onAction(LibraryAction.OnSeek(0.25f))
+
+        assertThat(musicPlayer.seekPositions).containsExactly(15_000L)
+        assertThat(viewModel.state.value.nowPlaying?.positionMillis).isEqualTo(15_000L)
+    }
+
+    @Test
+    fun `seeking does nothing while nothing is queued`() = runTest {
+        val viewModel = createViewModel()
+
+        viewModel.onAction(LibraryAction.OnSeek(0.5f))
+
+        assertThat(musicPlayer.seekPositions).isEmpty()
     }
 }

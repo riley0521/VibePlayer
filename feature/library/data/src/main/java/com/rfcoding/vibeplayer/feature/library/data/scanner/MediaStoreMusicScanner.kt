@@ -35,9 +35,11 @@ class MediaStoreMusicScanner(
             val files = try {
                 queryMusicFiles(filters)
             } catch (_: Exception) {
+                currentCoroutineContext().ensureActive()
                 // SecurityException when the permission was revoked, or a provider failure.
                 return@withContext Result.Error(DataError.Local.UNKNOWN)
             }
+            // Checkpoint after blocking operation.
             ensureActive()
 
             artworkDir.mkdirs()
@@ -84,8 +86,13 @@ class MediaStoreMusicScanner(
         val selectionArgs = arrayOf(if (isScopedStorage) MUSIC_RELATIVE_PATH else "$musicDirPath/%")
         val sortOrder = "${MediaStore.Audio.Media.DATE_ADDED} ASC"
 
-        val cursor = context.contentResolver.query(collection, projection, selection, selectionArgs, sortOrder)
-            ?: return emptyList()
+        val cursor = context.contentResolver.query(
+            collection,
+            projection,
+            selection,
+            selectionArgs,
+            sortOrder
+        ) ?: return emptyList()
 
         return cursor.use {
             val idColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
@@ -129,23 +136,19 @@ class MediaStoreMusicScanner(
             val title = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
                 ?.trim()
                 ?.takeIf { it.isNotEmpty() }
-            currentCoroutineContext().ensureActive()
             if (title == null) return null
 
             val artistName = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST)
                 ?.trim()
                 ?.takeIf { it.isNotEmpty() }
-            currentCoroutineContext().ensureActive()
 
             val durationMillis = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
                 ?.toLongOrNull()
-            currentCoroutineContext().ensureActive()
             if (durationMillis == null || !filters.acceptsDuration(durationMillis)) return null
 
             if (!seenKeys.add(title to artistName)) return null
 
             val picture = retriever.embeddedPicture
-            currentCoroutineContext().ensureActive()
 
             ScannedSong(
                 title = title,

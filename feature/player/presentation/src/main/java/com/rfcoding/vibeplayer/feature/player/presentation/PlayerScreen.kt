@@ -31,10 +31,14 @@ import com.rfcoding.vibeplayer.core.designsystem.components.VibeSeekBar
 import com.rfcoding.vibeplayer.core.designsystem.icons.VibeIcons
 import com.rfcoding.vibeplayer.core.designsystem.theme.VibePlayerTheme
 import com.rfcoding.vibeplayer.core.domain.player.RepeatMode
+import com.rfcoding.vibeplayer.core.presentation.DialogSheetScopedViewModel
 import com.rfcoding.vibeplayer.core.presentation.ObserveAsEvents
 import com.rfcoding.vibeplayer.core.presentation.SongUi
 import com.rfcoding.vibeplayer.core.presentation.currentDeviceConfiguration
+import com.rfcoding.vibeplayer.core.presentation.playlistname.PlaylistNameMode
+import com.rfcoding.vibeplayer.core.presentation.playlistname.PlaylistNameSheetRoot
 import com.rfcoding.vibeplayer.core.presentation.toDurationText
+import com.rfcoding.vibeplayer.feature.player.presentation.addtoplaylist.AddToPlaylistSheetRoot
 import org.koin.androidx.compose.koinViewModel
 import com.rfcoding.vibeplayer.core.presentation.R as PresentationR
 
@@ -54,6 +58,10 @@ fun PlayerRoot(
 
     ObserveAsEvents(viewModel.events) { event ->
         when (event) {
+            is PlayerEvent.AddedToPlaylist -> {
+                val message = context.getString(R.string.added_to_playlist, event.playlistName.asString(context))
+                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+            }
             is PlayerEvent.Error -> {
                 Toast.makeText(context, event.message.asString(context), Toast.LENGTH_LONG).show()
             }
@@ -69,6 +77,33 @@ fun PlayerRoot(
             }
         },
     )
+
+    val onSheetDismiss = { viewModel.onAction(PlayerAction.OnSheetDismiss) }
+
+    val addToPlaylistSheet = state.activeSheet as? PlayerSheet.AddToPlaylist
+    DialogSheetScopedViewModel(visible = addToPlaylistSheet != null) {
+        // The scope is cleared a frame after the sheet closes; show nothing in between.
+        addToPlaylistSheet?.let {
+            AddToPlaylistSheetRoot(
+                songId = it.songId,
+                onCreatePlaylistClick = { viewModel.onAction(PlayerAction.OnCreatePlaylistClick) },
+                onDismiss = onSheetDismiss,
+            )
+        }
+    }
+
+    val createPlaylistSheet = state.activeSheet as? PlayerSheet.CreatePlaylist
+    DialogSheetScopedViewModel(visible = createPlaylistSheet != null) {
+        createPlaylistSheet?.let {
+            PlaylistNameSheetRoot(
+                mode = PlaylistNameMode.Create,
+                onDismiss = onSheetDismiss,
+                onPlaylistCreated = { playlistId, name ->
+                    viewModel.onAction(PlayerAction.OnPlaylistCreated(playlistId, name))
+                },
+            )
+        }
+    }
 }
 
 @Composable

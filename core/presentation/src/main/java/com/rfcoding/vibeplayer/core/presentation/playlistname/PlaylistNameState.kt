@@ -1,4 +1,4 @@
-package com.rfcoding.vibeplayer.feature.library.presentation.playlistname
+package com.rfcoding.vibeplayer.core.presentation.playlistname
 
 /** The same Figma sheet names a new playlist and renames an existing one. */
 sealed interface PlaylistNameMode {

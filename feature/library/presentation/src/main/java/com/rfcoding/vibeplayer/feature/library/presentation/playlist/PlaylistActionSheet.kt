@@ -15,9 +15,10 @@ import com.rfcoding.vibeplayer.core.designsystem.components.PlaylistArtwork
 import com.rfcoding.vibeplayer.core.designsystem.components.PlaylistCard
 import com.rfcoding.vibeplayer.core.designsystem.components.VibeActionSheetButton
 import com.rfcoding.vibeplayer.core.designsystem.icons.VibeIcons
+import com.rfcoding.vibeplayer.core.presentation.SheetPreviewSurface
 import com.rfcoding.vibeplayer.core.presentation.VibeBottomSheet
 import com.rfcoding.vibeplayer.feature.library.presentation.R
-import com.rfcoding.vibeplayer.feature.library.presentation.components.SheetPreviewSurface
+import com.rfcoding.vibeplayer.core.presentation.R as PresentationR
 
 /**
  * Figma "Main Page - Playlist + Action Sheet": the playlist card repeated as a static header, then the
@@ -52,9 +53,9 @@ internal fun PlaylistActionSheetContent(
     ) {
         val playlist = sheet.playlist
         PlaylistCard(
-            title = playlist?.name ?: stringResource(R.string.favourites),
+            title = playlist?.name ?: stringResource(PresentationR.string.favourites),
             subtitle = pluralStringResource(
-                R.plurals.playlist_song_count,
+                PresentationR.plurals.playlist_song_count,
                 sheet.songCount,
                 sheet.songCount,
             ),

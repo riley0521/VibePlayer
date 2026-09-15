@@ -10,4 +10,21 @@
     <string name="error_disk_full">Your device storage is full</string>
     <string name="error_not_found">Couldn\'t find what you were looking for</string>
     <string name="error_unknown">Something went wrong. Please try again</string>
+
+    <!-- Shared by the library and the player. -->
+    <string name="favourites">Favourites</string>
+    <!-- Lowercase on the playlist cards, unlike the Songs tab header's songs_count. -->
+    <plurals name="playlist_song_count">
+        <item quantity="one">%d song</item>
+        <item quantity="other">%d songs</item>
+    </plurals>
+
+    <string name="create_new_playlist">Create New Playlist</string>
+    <string name="rename_playlist">Rename Playlist</string>
+    <string name="rename">Rename</string>
+    <string name="playlist_name_placeholder">Enter playlist name</string>
+    <string name="cancel">Cancel</string>
+    <string name="create">Create</string>
+    <string name="error_playlist_name_blank">Playlist name can\'t be empty</string>
+    <string name="error_playlist_name_too_long">Playlist name can\'t be longer than %d characters</string>
 </resources>

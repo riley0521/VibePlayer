@@ -6,4 +6,7 @@
     <string name="shuffle">Shuffle</string>
     <string name="repeat">Repeat</string>
     <string name="previous_song">Previous song</string>
+
+    <string name="create_playlist">Create Playlist</string>
+    <string name="added_to_playlist">Added to %s</string>
 </resources>

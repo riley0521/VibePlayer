@@ -1,7 +1,7 @@
 package com.rfcoding.vibeplayer.feature.library.presentation.playlist
 
 import com.rfcoding.vibeplayer.core.presentation.PlaylistUi
-import com.rfcoding.vibeplayer.feature.library.presentation.playlistname.PlaylistNameMode
+import com.rfcoding.vibeplayer.core.presentation.playlistname.PlaylistNameMode
 
 data class PlaylistState(
     /** Drives the virtual Favourites card, which is always listed first and can't be deleted. */

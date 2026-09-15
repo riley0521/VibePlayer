@@ -64,6 +64,7 @@ private val TabletMiniPlayerWidth = 480.dp
 fun LibraryRoot(
     onScanClick: () -> Unit,
     onPlaylistCreated: (playlistId: Long) -> Unit,
+    onPlaylistClick: (playlistId: Long?) -> Unit,
     onMiniPlayerClick: () -> Unit,
     viewModel: LibraryViewModel = koinViewModel(),
 ) {
@@ -102,6 +103,7 @@ fun LibraryRoot(
         playlistsTab = {
             PlaylistRoot(
                 onPlaylistCreated = onPlaylistCreated,
+                onPlaylistClick = onPlaylistClick,
             )
         }
     )

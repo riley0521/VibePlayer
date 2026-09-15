@@ -89,6 +89,10 @@ class MusicManager(
         }
     }
 
+    override suspend fun seekTo(positionMillis: Long) = withController { controller ->
+        controller.seekTo(positionMillis)
+    }
+
     override suspend fun setRepeatMode(repeatMode: RepeatMode) = withController { controller ->
         controller.repeatMode = repeatMode.toMedia3()
     }

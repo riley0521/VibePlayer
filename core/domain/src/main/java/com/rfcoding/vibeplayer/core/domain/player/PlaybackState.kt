@@ -30,4 +30,13 @@ data class PlaybackState(
 
     private val isLooping: Boolean
         get() = repeatMode == RepeatMode.All && queue.isNotEmpty()
+
+    /**
+     * The position a seek bar released at [fraction] points to, or null when nothing is loaded. It uses
+     * the song's stored duration because that is what the seek bars draw their progress from.
+     */
+    fun seekPositionFor(fraction: Float): Long? {
+        val song = currentSong ?: return null
+        return (fraction.coerceIn(0f, 1f) * song.durationMillis).toLong()
+    }
 }

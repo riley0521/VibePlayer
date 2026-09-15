@@ -1,4 +1,4 @@
-package com.rfcoding.vibeplayer.feature.library.domain
+package com.rfcoding.vibeplayer.core.domain.playlist
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo

@@ -1,14 +1,14 @@
-package com.rfcoding.vibeplayer.feature.library.presentation.playlistname
+package com.rfcoding.vibeplayer.core.presentation.playlistname
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rfcoding.vibeplayer.core.domain.playlist.PlaylistLocalDataSource
+import com.rfcoding.vibeplayer.core.domain.playlist.PlaylistNameValidator
 import com.rfcoding.vibeplayer.core.domain.util.Result
 import com.rfcoding.vibeplayer.core.domain.util.onFailure
 import com.rfcoding.vibeplayer.core.domain.util.onSuccess
 import com.rfcoding.vibeplayer.core.presentation.toUiText
-import com.rfcoding.vibeplayer.feature.library.domain.PlaylistNameValidator
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -65,7 +65,7 @@ class PlaylistNameViewModel(
         viewModelScope.launch {
             when (mode) {
                 PlaylistNameMode.Create -> playlistDataSource.createPlaylist(name)
-                    .onSuccess { id -> eventChannel.send(PlaylistNameEvent.PlaylistCreated(id)) }
+                    .onSuccess { id -> eventChannel.send(PlaylistNameEvent.PlaylistCreated(id, name)) }
                     .onFailure { error -> eventChannel.send(PlaylistNameEvent.Error(error.toUiText())) }
                 is PlaylistNameMode.Rename -> playlistDataSource.renamePlaylist(mode.playlistId, name)
                     .onSuccess { eventChannel.send(PlaylistNameEvent.PlaylistRenamed) }

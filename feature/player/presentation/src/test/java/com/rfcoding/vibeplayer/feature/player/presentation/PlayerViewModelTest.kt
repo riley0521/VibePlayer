@@ -3,6 +3,7 @@ package com.rfcoding.vibeplayer.feature.player.presentation
 import app.cash.turbine.test
 import assertk.assertThat
 import assertk.assertions.containsExactly
+import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isInstanceOf
@@ -11,8 +12,10 @@ import assertk.assertions.isTrue
 import com.rfcoding.vibeplayer.core.domain.player.PlaybackState
 import com.rfcoding.vibeplayer.core.domain.player.RepeatMode
 import com.rfcoding.vibeplayer.core.domain.util.DataError
+import com.rfcoding.vibeplayer.core.presentation.UiText
 import com.rfcoding.vibeplayer.core.presentation.toSongUi
 import com.rfcoding.vibeplayer.feature.player.presentation.fakes.FakeMusicPlayer
+import com.rfcoding.vibeplayer.feature.player.presentation.fakes.FakePlaylistLocalDataSource
 import com.rfcoding.vibeplayer.feature.player.presentation.fakes.FakeSongLocalDataSource
 import com.rfcoding.vibeplayer.feature.player.presentation.fakes.song
 import kotlinx.coroutines.Dispatchers
@@ -30,6 +33,7 @@ class PlayerViewModelTest {
 
     private lateinit var musicPlayer: FakeMusicPlayer
     private lateinit var songDataSource: FakeSongLocalDataSource
+    private lateinit var playlistDataSource: FakePlaylistLocalDataSource
 
     private val songs = listOf(song("a"), song("b"), song("c"), song("d"))
 
@@ -39,6 +43,7 @@ class PlayerViewModelTest {
         musicPlayer = FakeMusicPlayer()
         songDataSource = FakeSongLocalDataSource()
         songDataSource.songsMutable.value = songs
+        playlistDataSource = FakePlaylistLocalDataSource()
     }
 
     @AfterEach
@@ -46,7 +51,7 @@ class PlayerViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun createViewModel() = PlayerViewModel(musicPlayer, songDataSource)
+    private fun createViewModel() = PlayerViewModel(musicPlayer, songDataSource, playlistDataSource)
 
     private fun playSecondSong() {
         musicPlayer.playbackState.value = PlaybackState(queue = songs, currentIndex = 1)
@@ -160,5 +165,99 @@ class PlayerViewModelTest {
         viewModel.onAction(PlayerAction.OnFavoriteClick)
 
         assertThat(songDataSource.songsMutable.value.none { it.isFavorite }).isTrue()
+    }
+
+    @Test
+    fun `seeking moves the song and shows the new position at once`() = runTest {
+        val viewModel = createViewModel()
+        playSecondSong()
+
+        viewModel.onAction(PlayerAction.OnSeek(0.5f))
+
+        assertThat(musicPlayer.seekPositions).containsExactly(30_000L)
+        assertThat(viewModel.state.value.positionMillis).isEqualTo(30_000L)
+    }
+
+    @Test
+    fun `seeking does nothing while nothing is queued`() = runTest {
+        val viewModel = createViewModel()
+
+        viewModel.onAction(PlayerAction.OnSeek(0.5f))
+
+        assertThat(musicPlayer.seekPositions).isEmpty()
+    }
+
+    @Test
+    fun `add to playlist opens the sheet for the current song`() = runTest {
+        val viewModel = createViewModel()
+        playSecondSong()
+
+        viewModel.onAction(PlayerAction.OnAddToPlaylistClick)
+
+        assertThat(viewModel.state.value.activeSheet).isEqualTo(PlayerSheet.AddToPlaylist("b"))
+    }
+
+    @Test
+    fun `add to playlist does nothing while nothing is queued`() = runTest {
+        val viewModel = createViewModel()
+
+        viewModel.onAction(PlayerAction.OnAddToPlaylistClick)
+
+        assertThat(viewModel.state.value.activeSheet).isNull()
+    }
+
+    @Test
+    fun `the sheet keeps the song it opened for after the track changes`() = runTest {
+        val viewModel = createViewModel()
+        playSecondSong()
+        viewModel.onAction(PlayerAction.OnAddToPlaylistClick)
+
+        musicPlayer.playbackState.value = PlaybackState(queue = songs, currentIndex = 2)
+        viewModel.onAction(PlayerAction.OnCreatePlaylistClick)
+
+        assertThat(viewModel.state.value.activeSheet).isEqualTo(PlayerSheet.CreatePlaylist("b"))
+    }
+
+    @Test
+    fun `dismissing closes the sheet`() = runTest {
+        val viewModel = createViewModel()
+        playSecondSong()
+        viewModel.onAction(PlayerAction.OnAddToPlaylistClick)
+
+        viewModel.onAction(PlayerAction.OnSheetDismiss)
+
+        assertThat(viewModel.state.value.activeSheet).isNull()
+    }
+
+    @Test
+    fun `a playlist created from the sheet gets the song and reports its name`() = runTest {
+        val viewModel = createViewModel()
+        playSecondSong()
+        viewModel.onAction(PlayerAction.OnAddToPlaylistClick)
+        viewModel.onAction(PlayerAction.OnCreatePlaylistClick)
+
+        viewModel.events.test {
+            viewModel.onAction(PlayerAction.OnPlaylistCreated(playlistId = 7, name = "Road trip"))
+
+            val event = awaitItem() as PlayerEvent.AddedToPlaylist
+            assertThat((event.playlistName as UiText.DynamicString).value).isEqualTo("Road trip")
+        }
+        assertThat(playlistDataSource.addedSongIds[7L]).isEqualTo(listOf("b"))
+        assertThat(viewModel.state.value.activeSheet).isNull()
+    }
+
+    @Test
+    fun `a failed add to the created playlist sends an error`() = runTest {
+        playlistDataSource.error = DataError.Local.DISK_FULL
+        val viewModel = createViewModel()
+        playSecondSong()
+        viewModel.onAction(PlayerAction.OnAddToPlaylistClick)
+        viewModel.onAction(PlayerAction.OnCreatePlaylistClick)
+
+        viewModel.events.test {
+            viewModel.onAction(PlayerAction.OnPlaylistCreated(playlistId = 7, name = "Road trip"))
+
+            assertThat(awaitItem()).isInstanceOf<PlayerEvent.Error>()
+        }
     }
 }

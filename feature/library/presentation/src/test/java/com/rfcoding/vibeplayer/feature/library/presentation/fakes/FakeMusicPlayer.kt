@@ -13,6 +13,7 @@ class FakeMusicPlayer : MusicPlayer {
     var togglePlayPauseCount = 0
     var skipToNextCount = 0
     var skipToPreviousCount = 0
+    val seekPositions = mutableListOf<Long>()
 
     override suspend fun play(queue: List<Song>) {
         playedQueues += queue
@@ -28,6 +29,10 @@ class FakeMusicPlayer : MusicPlayer {
 
     override suspend fun skipToPrevious() {
         skipToPreviousCount++
+    }
+
+    override suspend fun seekTo(positionMillis: Long) {
+        seekPositions += positionMillis
     }
 
     override suspend fun setRepeatMode(repeatMode: RepeatMode) = Unit

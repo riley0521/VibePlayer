@@ -1,4 +1,4 @@
-package com.rfcoding.vibeplayer.feature.library.presentation.playlistname
+package com.rfcoding.vibeplayer.core.presentation.playlistname
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
@@ -25,11 +25,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rfcoding.vibeplayer.core.designsystem.components.VibeButton
 import com.rfcoding.vibeplayer.core.designsystem.components.VibeButtonStyle
 import com.rfcoding.vibeplayer.core.designsystem.components.VibeTextField
+import com.rfcoding.vibeplayer.core.domain.playlist.PlaylistNameValidator
 import com.rfcoding.vibeplayer.core.presentation.ObserveAsEvents
+import com.rfcoding.vibeplayer.core.presentation.R
+import com.rfcoding.vibeplayer.core.presentation.SheetPreviewSurface
 import com.rfcoding.vibeplayer.core.presentation.VibeBottomSheet
-import com.rfcoding.vibeplayer.feature.library.domain.PlaylistNameValidator
-import com.rfcoding.vibeplayer.feature.library.presentation.R
-import com.rfcoding.vibeplayer.feature.library.presentation.components.SheetPreviewSurface
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -43,7 +43,7 @@ import org.koin.core.parameter.parametersOf
 fun PlaylistNameSheetRoot(
     mode: PlaylistNameMode,
     onDismiss: () -> Unit,
-    onPlaylistCreated: (playlistId: Long) -> Unit,
+    onPlaylistCreated: (playlistId: Long, name: String) -> Unit,
     viewModel: PlaylistNameViewModel = koinViewModel { parametersOf(mode) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -56,7 +56,7 @@ fun PlaylistNameSheetRoot(
             is PlaylistNameEvent.PlaylistCreated -> {
                 scope.launch {
                     sheetState.hide()
-                    onPlaylistCreated(event.playlistId)
+                    onPlaylistCreated(event.playlistId, event.name)
                 }
             }
             PlaylistNameEvent.PlaylistRenamed -> onDismiss()

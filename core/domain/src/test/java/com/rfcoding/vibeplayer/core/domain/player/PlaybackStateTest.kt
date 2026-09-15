@@ -1,7 +1,9 @@
 package com.rfcoding.vibeplayer.core.domain.player
 
 import assertk.assertThat
+import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
+import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import com.rfcoding.vibeplayer.core.domain.song.Song
 import org.junit.jupiter.api.Test
@@ -56,5 +58,23 @@ class PlaybackStateTest {
 
         assertThat(empty.hasPrevious).isFalse()
         assertThat(empty.hasNext).isFalse()
+    }
+
+    @Test
+    fun `the seek position is the fraction of the current song's duration`() {
+        assertThat(playback(1).seekPositionFor(0f)).isEqualTo(0L)
+        assertThat(playback(1).seekPositionFor(0.5f)).isEqualTo(30_000L)
+        assertThat(playback(1).seekPositionFor(1f)).isEqualTo(60_000L)
+    }
+
+    @Test
+    fun `a seek fraction outside the bar is clamped to the song`() {
+        assertThat(playback(1).seekPositionFor(-0.2f)).isEqualTo(0L)
+        assertThat(playback(1).seekPositionFor(1.5f)).isEqualTo(60_000L)
+    }
+
+    @Test
+    fun `nothing to seek when no song is loaded`() {
+        assertThat(PlaybackState().seekPositionFor(0.5f)).isNull()
     }
 }

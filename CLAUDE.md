@@ -21,7 +21,7 @@ An Android music player that runs entirely offline (Kotlin, Jetpack Compose, Mat
 ./gradlew assembleDebug                                  # must compile
 ./gradlew testDebugUnitTest                              # all JVM unit tests
 ./gradlew :core:data:testDebugUnitTest                   # one module
-./gradlew :feature:library:domain:test --tests "*PlaylistNameValidatorTest"
+./gradlew :core:domain:test --tests "*PlaylistNameValidatorTest"
 ```
 
 Don't launch an emulator or device. The user checks the UI manually.
@@ -32,17 +32,18 @@ Don't launch an emulator or device. The user checks the UI manually.
 :app                               VibePlayerApp (startKoin, applicationScope), MainActivity, NavHost, splash
 :build-logic                       convention plugins: android-application, android-library, android-feature,
                                    domain-module, compose, koin, room, kotlinx-serialization
-:core:domain                       Result/DataError, Song, Playlist, SongRepository, PlaylistRepository, MusicPlayer
+:core:domain                       Result/DataError, Song, Playlist, SongRepository, PlaylistRepository, MusicPlayer,
+                                   PlaylistNameValidator
 :core:data                         implementations of the core repositories/data sources, entity<->domain mappers
 :core:database                     VibePlayerDatabase, SongEntity, PlaylistEntity, PlaylistSongCrossRef, DAOs
 :core:player                       Media3 ExoPlayer + MediaSessionService, MediaController-backed MusicPlayer
-:core:presentation                 UiText, ObserveAsEvents, DataError.toUiText(), MiniPlayer, DeviceConfiguration
+:core:presentation                 UiText, ObserveAsEvents, DataError.toUiText(), MiniPlayer, DeviceConfiguration,
+                                   create/rename playlist sheet (shared by library and player)
 :core:design-system                theme, colors, Host Grotesk typography, icons, reusable components
 :feature:permission:presentation   permission screen
 :feature:library:{domain,data,presentation}
-                                   main screen (songs + playlist tabs), search, scan music, create-playlist
-                                   bottom sheet, add-songs screen; MediaStore scanner, scan filters,
-                                   playlist-name validator
+                                   main screen (songs + playlist tabs), playlist page, search, scan music,
+                                   add-songs screen; MediaStore scanner, scan filters
 :feature:player:presentation       full player screen, add-to-playlist, favorite toggle
 ```
 

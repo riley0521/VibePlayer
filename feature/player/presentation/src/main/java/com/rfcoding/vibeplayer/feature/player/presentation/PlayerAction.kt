@@ -10,4 +10,8 @@ sealed interface PlayerAction {
     data object OnPlayPauseClick : PlayerAction
     data object OnNextClick : PlayerAction
     data class OnSeek(val fraction: Float) : PlayerAction
+    data object OnSheetDismiss : PlayerAction
+    /** The Create Playlist row of the add-to-playlist sheet. */
+    data object OnCreatePlaylistClick : PlayerAction
+    data class OnPlaylistCreated(val playlistId: Long, val name: String) : PlayerAction
 }

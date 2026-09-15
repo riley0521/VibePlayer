@@ -1,4 +1,4 @@
-package com.rfcoding.vibeplayer.feature.library.presentation.playlistname
+package com.rfcoding.vibeplayer.core.presentation.playlistname
 
 sealed interface PlaylistNameAction {
     data class OnNameChange(val name: String) : PlaylistNameAction

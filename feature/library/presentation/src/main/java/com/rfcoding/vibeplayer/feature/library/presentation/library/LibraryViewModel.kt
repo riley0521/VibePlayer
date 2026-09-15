@@ -83,9 +83,17 @@ class LibraryViewModel(
             LibraryAction.OnPlayPauseClick -> viewModelScope.launch { musicPlayer.togglePlayPause() }
             LibraryAction.OnSkipToPreviousClick -> viewModelScope.launch { musicPlayer.skipToPrevious() }
             LibraryAction.OnSkipNextClick -> viewModelScope.launch { musicPlayer.skipToNext() }
-            // Seeking isn't supported yet; navigation is handled by the Root.
+            is LibraryAction.OnSeek -> seek(action.fraction)
+            // Navigation is handled by the Root.
             else -> Unit
         }
+    }
+
+    private fun seek(fraction: Float) {
+        val positionMillis = musicPlayer.playbackState.value.seekPositionFor(fraction) ?: return
+        // Shown straight away, so the released seek bar doesn't jump back until the session catches up.
+        _state.update { it.copy(nowPlaying = it.nowPlaying?.copy(positionMillis = positionMillis)) }
+        viewModelScope.launch { musicPlayer.seekTo(positionMillis) }
     }
 
     private suspend fun scanVisibly() {

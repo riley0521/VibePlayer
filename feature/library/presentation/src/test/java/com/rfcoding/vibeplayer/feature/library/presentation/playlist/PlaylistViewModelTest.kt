@@ -10,13 +10,13 @@ import assertk.assertions.isInstanceOf
 import assertk.assertions.isNull
 import assertk.assertions.single
 import com.rfcoding.vibeplayer.core.domain.util.DataError
+import com.rfcoding.vibeplayer.core.presentation.playlistname.PlaylistNameMode
 import com.rfcoding.vibeplayer.core.presentation.toPlaylistUi
 import com.rfcoding.vibeplayer.feature.library.presentation.fakes.FakeMusicPlayer
 import com.rfcoding.vibeplayer.feature.library.presentation.fakes.FakePlaylistLocalDataSource
 import com.rfcoding.vibeplayer.feature.library.presentation.fakes.FakeSongLocalDataSource
 import com.rfcoding.vibeplayer.feature.library.presentation.fakes.playlist
 import com.rfcoding.vibeplayer.feature.library.presentation.fakes.song
-import com.rfcoding.vibeplayer.feature.library.presentation.playlistname.PlaylistNameMode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher

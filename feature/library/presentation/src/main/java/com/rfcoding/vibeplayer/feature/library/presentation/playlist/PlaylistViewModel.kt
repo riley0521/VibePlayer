@@ -11,9 +11,9 @@ import com.rfcoding.vibeplayer.core.domain.song.SongLocalDataSource
 import com.rfcoding.vibeplayer.core.domain.util.DataError
 import com.rfcoding.vibeplayer.core.domain.util.EmptyResult
 import com.rfcoding.vibeplayer.core.domain.util.onFailure
+import com.rfcoding.vibeplayer.core.presentation.playlistname.PlaylistNameMode
 import com.rfcoding.vibeplayer.core.presentation.toPlaylistUi
 import com.rfcoding.vibeplayer.core.presentation.toUiText
-import com.rfcoding.vibeplayer.feature.library.presentation.playlistname.PlaylistNameMode
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -96,7 +96,7 @@ class PlaylistViewModel(
                     runDatabaseUpdate { playlistDataSource.setPlaylistCover(playlistId, action.uri) }
                 }
             }
-            // No playlist detail screen yet.
+            // Navigation is handled by the Root.
             PlaylistAction.OnFavouritesClick, is PlaylistAction.OnPlaylistClick -> Unit
         }
     }

@@ -18,9 +18,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.rfcoding.vibeplayer.core.designsystem.components.VibeButton
 import com.rfcoding.vibeplayer.core.designsystem.components.VibeButtonStyle
+import com.rfcoding.vibeplayer.core.presentation.SheetPreviewSurface
 import com.rfcoding.vibeplayer.core.presentation.VibeBottomSheet
 import com.rfcoding.vibeplayer.feature.library.presentation.R
-import com.rfcoding.vibeplayer.feature.library.presentation.components.SheetPreviewSurface
 
 /** Figma centers the message in a column this wide, even on a tablet. */
 private val MessageMaxWidth = 400.dp

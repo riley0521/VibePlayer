@@ -1,4 +1,4 @@
-package com.rfcoding.vibeplayer.feature.library.presentation.playlistname
+package com.rfcoding.vibeplayer.core.presentation.playlistname
 
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
@@ -9,8 +9,8 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isTrue
 import com.rfcoding.vibeplayer.core.domain.util.DataError
-import com.rfcoding.vibeplayer.feature.library.presentation.fakes.FakePlaylistLocalDataSource
-import com.rfcoding.vibeplayer.feature.library.presentation.fakes.playlist
+import com.rfcoding.vibeplayer.core.presentation.fakes.FakePlaylistLocalDataSource
+import com.rfcoding.vibeplayer.core.presentation.fakes.playlist
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -74,14 +74,14 @@ class PlaylistNameViewModelTest {
     }
 
     @Test
-    fun `create saves the trimmed name and reports the new id`() = runTest {
+    fun `create saves the trimmed name and reports the new id and name`() = runTest {
         val viewModel = createViewModel()
         viewModel.onAction(PlaylistNameAction.OnNameChange("  Road trip  "))
 
         viewModel.events.test {
             viewModel.onAction(PlaylistNameAction.OnConfirmClick)
 
-            assertThat(awaitItem()).isEqualTo(PlaylistNameEvent.PlaylistCreated(playlistId = 1))
+            assertThat(awaitItem()).isEqualTo(PlaylistNameEvent.PlaylistCreated(playlistId = 1, name = "Road trip"))
         }
         assertThat(playlistDataSource.playlists.value.map { it.name }).containsExactly("Road trip")
     }

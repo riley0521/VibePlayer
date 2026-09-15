@@ -1,8 +1,8 @@
-package com.rfcoding.vibeplayer.feature.library.domain
+package com.rfcoding.vibeplayer.core.domain.playlist
 
+import com.rfcoding.vibeplayer.core.domain.playlist.PlaylistNameValidator.MAX_LENGTH
 import com.rfcoding.vibeplayer.core.domain.util.Error
 import com.rfcoding.vibeplayer.core.domain.util.Result
-import com.rfcoding.vibeplayer.feature.library.domain.PlaylistNameValidator.MAX_LENGTH
 
 enum class PlaylistNameError : Error {
     BLANK,
