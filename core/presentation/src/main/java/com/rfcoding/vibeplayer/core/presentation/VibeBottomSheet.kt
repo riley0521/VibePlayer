@@ -11,7 +11,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 
 /** Figma keeps the tablet sheet a centered 480dp card instead of letting it span the screen. */
 private val TabletSheetWidth = 480.dp
@@ -35,9 +34,6 @@ fun VibeBottomSheet(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val isMobile = currentDeviceConfiguration().isMobile
-    Dialog(
-        onDismissRequest = {}
-    ) { }
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         modifier = modifier,
