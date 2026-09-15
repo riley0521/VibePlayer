@@ -11,7 +11,22 @@ data class PlaylistDetailState(
     val songs: List<SongUi> = emptyList(),
     /** True until the first emission, so an empty playlist doesn't flash while it loads. */
     val isLoading: Boolean = true,
+    /** Entered with the pen icon: the songs become selectable so they can be removed. */
+    val isDeleteMode: Boolean = false,
+    val selectedSongIds: Set<String> = emptySet(),
+    val isRemoveSheetVisible: Boolean = false,
+    val isRemoving: Boolean = false,
 ) {
     /** Favourites fills up from the Player's heart, so it offers no Add Songs button. */
     val canAddSongs: Boolean get() = !isFavourites
+
+    /** The pen icon only shows when there is something to remove. */
+    val canEditSongs: Boolean get() = !isLoading && songs.isNotEmpty()
+
+    val selectedCount: Int get() = selectedSongIds.size
+
+    val hasSelection: Boolean get() = selectedSongIds.isNotEmpty()
+
+    val isAllSelected: Boolean
+        get() = songs.isNotEmpty() && songs.all { it.id in selectedSongIds }
 }

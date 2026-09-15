@@ -58,10 +58,10 @@ class RoomPlaylistDataSource(
         }
     }
 
-    override suspend fun removeSongFromPlaylist(
+    override suspend fun removeSongsFromPlaylist(
         playlistId: Long,
-        songId: String,
+        songIds: List<String>,
     ): EmptyResult<DataError.Local> {
-        return safeDatabaseUpdate { playlistDao.deleteCrossRef(playlistId, songId) }
+        return safeDatabaseUpdate { playlistDao.deleteCrossRefs(playlistId, songIds) }
     }
 }

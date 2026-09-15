@@ -18,5 +18,5 @@ interface PlaylistLocalDataSource {
 
     /** Songs already in the playlist are left untouched. */
     suspend fun addSongsToPlaylist(playlistId: Long, songIds: List<String>): EmptyResult<DataError.Local>
-    suspend fun removeSongFromPlaylist(playlistId: Long, songId: String): EmptyResult<DataError.Local>
+    suspend fun removeSongsFromPlaylist(playlistId: Long, songIds: List<String>): EmptyResult<DataError.Local>
 }

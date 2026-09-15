@@ -15,4 +15,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.compose.material3.adaptive)
+
+    testImplementation(projects.core.testing)
 }

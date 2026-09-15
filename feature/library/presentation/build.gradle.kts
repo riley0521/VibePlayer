@@ -8,4 +8,6 @@ android {
 
 dependencies {
     implementation(projects.feature.library.domain)
+
+    testImplementation(projects.core.testing)
 }

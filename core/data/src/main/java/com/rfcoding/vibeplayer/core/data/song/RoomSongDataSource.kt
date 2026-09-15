@@ -30,6 +30,10 @@ class RoomSongDataSource(
         return safeDatabaseUpdate { songDao.setFavorite(songId, isFavorite) }
     }
 
+    override suspend fun setFavorites(songIds: List<String>, isFavorite: Boolean): EmptyResult<DataError.Local> {
+        return safeDatabaseUpdate { songDao.setFavorites(songIds, isFavorite) }
+    }
+
     override suspend fun syncScannedSongs(songs: List<Song>): EmptyResult<DataError.Local> {
         return safeDatabaseUpdate { songDao.syncScannedSongs(songs.map { it.toSongEntity() }) }
     }

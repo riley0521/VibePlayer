@@ -14,6 +14,9 @@ interface SongLocalDataSource {
     fun observeFavoriteSongs(): Flow<List<Song>>
     suspend fun setFavorite(songId: String, isFavorite: Boolean): EmptyResult<DataError.Local>
 
+    /** Sets [isFavorite] on every song in [songIds] in one transaction. */
+    suspend fun setFavorites(songIds: List<String>, isFavorite: Boolean): EmptyResult<DataError.Local>
+
     /**
      * Makes the stored songs match [songs], the result of a full scan: songs already stored keep
      * their id, favourite flag, creation date and playlist links; songs missing from [songs] are

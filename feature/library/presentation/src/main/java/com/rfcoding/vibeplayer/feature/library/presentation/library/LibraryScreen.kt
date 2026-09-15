@@ -63,6 +63,7 @@ private val TabletMiniPlayerWidth = 480.dp
 @Composable
 fun LibraryRoot(
     onScanClick: () -> Unit,
+    onSearchClick: () -> Unit,
     onPlaylistCreated: (playlistId: Long) -> Unit,
     onPlaylistClick: (playlistId: Long?) -> Unit,
     onMiniPlayerClick: () -> Unit,
@@ -91,6 +92,7 @@ fun LibraryRoot(
         onAction = { action ->
             when (action) {
                 LibraryAction.OnScanClick -> onScanClick()
+                LibraryAction.OnSearchClick -> onSearchClick()
                 LibraryAction.OnMiniPlayerClick -> onMiniPlayerClick()
                 else -> viewModel.onAction(action)
             }

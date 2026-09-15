@@ -1,5 +1,7 @@
 package com.rfcoding.vibeplayer.feature.library.presentation.playlistdetail
 
+import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -21,14 +23,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rfcoding.vibeplayer.core.designsystem.components.PlaylistArtwork
 import com.rfcoding.vibeplayer.core.designsystem.components.PlaylistArtworkImage
+import com.rfcoding.vibeplayer.core.designsystem.components.SelectableSongCard
 import com.rfcoding.vibeplayer.core.designsystem.components.SongCard
 import com.rfcoding.vibeplayer.core.designsystem.components.VibeButton
 import com.rfcoding.vibeplayer.core.designsystem.components.VibeButtonStyle
@@ -40,9 +45,12 @@ import com.rfcoding.vibeplayer.core.designsystem.theme.VibePlayerTheme
 import com.rfcoding.vibeplayer.core.presentation.ObserveAsEvents
 import com.rfcoding.vibeplayer.core.presentation.currentDeviceConfiguration
 import com.rfcoding.vibeplayer.feature.library.presentation.R
+import com.rfcoding.vibeplayer.feature.library.presentation.components.BottomActionButton
 import com.rfcoding.vibeplayer.feature.library.presentation.components.PlayButton
+import com.rfcoding.vibeplayer.feature.library.presentation.components.SelectAllRow
 import com.rfcoding.vibeplayer.feature.library.presentation.components.ShuffleButton
 import com.rfcoding.vibeplayer.feature.library.presentation.components.SongCountText
+import com.rfcoding.vibeplayer.feature.library.presentation.components.TabletBottomActionButtonWidth
 import com.rfcoding.vibeplayer.feature.library.presentation.songs.PreviewSongs
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -65,10 +73,14 @@ fun PlaylistDetailRoot(
     viewModel: PlaylistDetailViewModel = koinViewModel { parametersOf(playlistId) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
     ObserveAsEvents(viewModel.events) { event ->
         when (event) {
             PlaylistDetailEvent.NavigateBack -> onNavigateBack()
+            is PlaylistDetailEvent.Error -> {
+                Toast.makeText(context, event.message.asString(context), Toast.LENGTH_LONG).show()
+            }
         }
     }
 
@@ -88,6 +100,9 @@ fun PlaylistDetailRoot(
  * Figma "Playlist Page" / "Playlist Page - Empty". The circular cover and the title scroll away with
  * the songs. On mobile the song count gets its own row under Shuffle/Play; tablets put both in one row.
  *
+ * The pen icon enters delete mode, which reuses Add Songs' selection UI: a Select All row replaces the
+ * Shuffle/Play header, the cards become checkable and a Delete button appears once something is ticked.
+ *
  * Like `PlaylistScreen`, the horizontal padding lives on each item, because the count row's end inset is
  * narrower (the add button's 44dp touch target overhangs).
  */
@@ -99,16 +114,31 @@ fun PlaylistDetailScreen(
 ) {
     val isMobile = currentDeviceConfiguration().isMobile
     val sidePadding = if (isMobile) 16.dp else 24.dp
+    val playlistName = if (state.isFavourites) stringResource(PresentationR.string.favourites) else state.name
+
+    BackHandler(enabled = state.isDeleteMode) {
+        onAction(PlaylistDetailAction.OnExitDeleteModeClick)
+    }
 
     Scaffold(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            VibeInnerTopBar(
-                title = "",
-                onBackClick = { onAction(PlaylistDetailAction.OnBackClick) },
+            PlaylistDetailTopBar(
+                state = state,
+                onAction = onAction,
                 modifier = if (isMobile) Modifier else Modifier.padding(horizontal = TabletTopBarPadding),
             )
+        },
+        bottomBar = {
+            if (state.isDeleteMode && state.hasSelection) {
+                BottomActionButton(
+                    text = stringResource(R.string.action_delete),
+                    onClick = { onAction(PlaylistDetailAction.OnDeleteSelectedClick) },
+                    style = VibeButtonStyle.Destructive,
+                    maxWidth = if (isMobile) Dp.Unspecified else TabletBottomActionButtonWidth
+                )
+            }
         },
     ) { innerPadding ->
         LazyColumn(
@@ -121,7 +151,7 @@ fun PlaylistDetailScreen(
         ) {
             item(key = "hero") {
                 PlaylistHero(
-                    name = if (state.isFavourites) stringResource(PresentationR.string.favourites) else state.name,
+                    name = playlistName,
                     artwork = when {
                         state.isFavourites -> PlaylistArtwork.Favourites
                         state.imageUri != null -> PlaylistArtwork.Image(state.imageUri)
@@ -138,6 +168,28 @@ fun PlaylistDetailScreen(
                         onAddSongsClick = { onAction(PlaylistDetailAction.OnAddSongsClick) },
                         modifier = Modifier.padding(horizontal = 16.dp),
                     )
+                }
+                state.isDeleteMode -> {
+                    item(key = "selectAll") {
+                        SelectAllRow(
+                            selected = state.isAllSelected,
+                            onSelectedChange = { onAction(PlaylistDetailAction.OnSelectAllChange(it)) },
+                            modifier = Modifier.padding(start = sidePadding, end = sidePadding, top = 16.dp),
+                        )
+                    }
+                    items(items = state.songs, key = { it.id }) { song ->
+                        SelectableSongCard(
+                            title = song.title,
+                            artistName = song.artistName,
+                            duration = song.durationText,
+                            imageUri = song.imageUri,
+                            selected = song.id in state.selectedSongIds,
+                            onSelectedChange = {
+                                onAction(PlaylistDetailAction.OnSongSelectedChange(song.id, it))
+                            },
+                            modifier = Modifier.padding(horizontal = sidePadding),
+                        )
+                    }
                 }
                 else -> {
                     item(key = "header") {
@@ -161,6 +213,51 @@ fun PlaylistDetailScreen(
                 }
             }
         }
+    }
+
+    if (state.isRemoveSheetVisible) {
+        RemoveSongsSheet(
+            songCount = state.selectedCount,
+            playlistName = playlistName,
+            isRemoving = state.isRemoving,
+            onAction = onAction,
+        )
+    }
+}
+
+/** Back and the pen icon normally; in delete mode, Close, the selection count and no actions. */
+@Composable
+private fun PlaylistDetailTopBar(
+    state: PlaylistDetailState,
+    onAction: (PlaylistDetailAction) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    if (state.isDeleteMode) {
+        VibeInnerTopBar(
+            title = if (state.hasSelection) {
+                stringResource(R.string.selected_count, state.selectedCount)
+            } else {
+                stringResource(R.string.select_songs)
+            },
+            onBackClick = { onAction(PlaylistDetailAction.OnExitDeleteModeClick) },
+            navigationIcon = VibeIcons.Close,
+            modifier = modifier,
+        )
+    } else {
+        VibeInnerTopBar(
+            title = "",
+            onBackClick = { onAction(PlaylistDetailAction.OnBackClick) },
+            modifier = modifier,
+            actions = {
+                if (state.canEditSongs) {
+                    VibeIconButton(
+                        icon = VibeIcons.Pen,
+                        contentDescription = stringResource(R.string.edit_songs),
+                        onClick = { onAction(PlaylistDetailAction.OnEditClick) },
+                    )
+                }
+            },
+        )
     }
 }
 
@@ -318,6 +415,24 @@ private fun PlaylistDetailScreenEmptyPreview() {
     VibePlayerTheme {
         PlaylistDetailScreen(
             state = PlaylistDetailState(name = "My Playlist", isLoading = false),
+            onAction = {},
+        )
+    }
+}
+
+@Preview(name = "Mobile", widthDp = 412, heightDp = 917)
+@Preview(name = "Tablet", widthDp = 840, heightDp = 1024)
+@Composable
+private fun PlaylistDetailScreenDeleteModePreview() {
+    VibePlayerTheme {
+        PlaylistDetailScreen(
+            state = PlaylistDetailState(
+                name = "My Playlist",
+                songs = PreviewSongs,
+                isLoading = false,
+                isDeleteMode = true,
+                selectedSongIds = PreviewSongs.take(2).map { it.id }.toSet(),
+            ),
             onAction = {},
         )
     }

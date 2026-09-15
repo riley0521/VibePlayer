@@ -5,17 +5,14 @@ import assertk.assertions.containsExactly
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import com.rfcoding.vibeplayer.core.domain.song.Song
-import com.rfcoding.vibeplayer.core.domain.song.SongLocalDataSource
 import com.rfcoding.vibeplayer.core.domain.util.DataError
-import com.rfcoding.vibeplayer.core.domain.util.EmptyResult
 import com.rfcoding.vibeplayer.core.domain.util.Result
+import com.rfcoding.vibeplayer.core.testing.FakeSongLocalDataSource
 import com.rfcoding.vibeplayer.feature.library.domain.MinDuration
 import com.rfcoding.vibeplayer.feature.library.domain.MinSize
 import com.rfcoding.vibeplayer.feature.library.domain.MusicScanner
 import com.rfcoding.vibeplayer.feature.library.domain.ScanFilters
 import com.rfcoding.vibeplayer.feature.library.domain.ScannedSong
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -82,7 +79,7 @@ class MediaStoreMusicLibraryRepositoryTest {
 
     @Test
     fun `a failed sync is reported`() = runTest {
-        songDataSource.syncResult = Result.Error(DataError.Local.DISK_FULL)
+        songDataSource.syncError = DataError.Local.DISK_FULL
 
         val result = repository.scanMusic(ScanFilters())
 
@@ -96,20 +93,6 @@ class MediaStoreMusicLibraryRepositoryTest {
         override suspend fun scan(filters: ScanFilters): Result<List<ScannedSong>, DataError.Local> {
             receivedFilters += filters
             return result
-        }
-    }
-
-    private class FakeSongLocalDataSource : SongLocalDataSource {
-        var syncResult: EmptyResult<DataError.Local> = Result.Success(Unit)
-        val syncedSongs = mutableListOf<List<Song>>()
-
-        override val songs: Flow<List<Song>> = emptyFlow()
-        override fun observeFavoriteSongs(): Flow<List<Song>> = emptyFlow()
-        override suspend fun setFavorite(songId: String, isFavorite: Boolean) = Result.Success(Unit)
-
-        override suspend fun syncScannedSongs(songs: List<Song>): EmptyResult<DataError.Local> {
-            syncedSongs += songs
-            return syncResult
         }
     }
 

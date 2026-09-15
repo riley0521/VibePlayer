@@ -6,9 +6,9 @@ import assertk.assertions.containsExactlyInAnyOrder
 import assertk.assertions.isEmpty
 import assertk.assertions.single
 import com.rfcoding.vibeplayer.core.presentation.toSongUi
-import com.rfcoding.vibeplayer.feature.library.presentation.fakes.FakeMusicPlayer
-import com.rfcoding.vibeplayer.feature.library.presentation.fakes.FakeSongLocalDataSource
-import com.rfcoding.vibeplayer.feature.library.presentation.fakes.song
+import com.rfcoding.vibeplayer.core.testing.FakeMusicPlayer
+import com.rfcoding.vibeplayer.core.testing.FakeSongLocalDataSource
+import com.rfcoding.vibeplayer.core.testing.song
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher

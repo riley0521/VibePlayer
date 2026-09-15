@@ -49,4 +49,13 @@
 
     <string name="delete_playlist_title">Delete Playlist</string>
     <string name="delete_playlist_message">Are you sure you want to delete playlist %s?</string>
+
+    <string name="edit_songs">Edit songs</string>
+    <string name="select_songs">Select songs</string>
+    <string name="remove_songs_title">Remove Songs</string>
+    <plurals name="remove_songs_message">
+        <item quantity="one">Are you sure you want to remove %1$d song from %2$s?</item>
+        <item quantity="other">Are you sure you want to remove %1$d songs from %2$s?</item>
+    </plurals>
+    <string name="action_remove">Remove</string>
 </resources>

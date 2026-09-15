@@ -40,6 +40,9 @@ Don't launch an emulator or device. The user checks the UI manually.
 :core:presentation                 UiText, ObserveAsEvents, DataError.toUiText(), MiniPlayer, DeviceConfiguration,
                                    create/rename playlist sheet (shared by library and player)
 :core:design-system                theme, colors, Host Grotesk typography, icons, reusable components
+:core:testing                      pure Kotlin; shared fakes of :core:domain interfaces (FakeMusicPlayer,
+                                   FakeSongLocalDataSource, FakePlaylistLocalDataSource) and song()/playlist()
+                                   builders. Add it with testImplementation; never copy a fake into a module.
 :feature:permission:presentation   permission screen
 :feature:library:{domain,data,presentation}
                                    main screen (songs + playlist tabs), playlist page, search, scan music,

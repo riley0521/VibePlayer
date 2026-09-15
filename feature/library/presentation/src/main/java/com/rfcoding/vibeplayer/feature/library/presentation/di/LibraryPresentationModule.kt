@@ -5,6 +5,7 @@ import com.rfcoding.vibeplayer.feature.library.presentation.library.LibraryViewM
 import com.rfcoding.vibeplayer.feature.library.presentation.playlist.PlaylistViewModel
 import com.rfcoding.vibeplayer.feature.library.presentation.playlistdetail.PlaylistDetailViewModel
 import com.rfcoding.vibeplayer.feature.library.presentation.scan.ScanMusicViewModel
+import com.rfcoding.vibeplayer.feature.library.presentation.search.SearchViewModel
 import com.rfcoding.vibeplayer.feature.library.presentation.songs.SongsViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
@@ -15,6 +16,7 @@ val libraryPresentationModule = module {
     viewModelOf(::SongsViewModel)
     viewModelOf(::PlaylistViewModel)
     viewModelOf(::ScanMusicViewModel)
+    viewModelOf(::SearchViewModel)
     // Its playlistId comes from parametersOf in AddSongsRoot.
     viewModelOf(::AddSongsViewModel)
     // Its playlistId comes from parametersOf in PlaylistDetailRoot. It is null for Favourites, which

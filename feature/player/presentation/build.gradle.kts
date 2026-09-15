@@ -5,3 +5,7 @@ plugins {
 android {
     namespace = "com.rfcoding.vibeplayer.feature.player.presentation"
 }
+
+dependencies {
+    testImplementation(projects.core.testing)
+}

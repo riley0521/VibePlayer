@@ -13,11 +13,11 @@ import com.rfcoding.vibeplayer.core.domain.player.RepeatMode
 import com.rfcoding.vibeplayer.core.domain.util.DataError
 import com.rfcoding.vibeplayer.core.domain.util.Result
 import com.rfcoding.vibeplayer.core.presentation.toSongUi
+import com.rfcoding.vibeplayer.core.testing.FakeMusicPlayer
+import com.rfcoding.vibeplayer.core.testing.FakeSongLocalDataSource
+import com.rfcoding.vibeplayer.core.testing.song
 import com.rfcoding.vibeplayer.feature.library.domain.ScanFilters
 import com.rfcoding.vibeplayer.feature.library.presentation.fakes.FakeMusicLibraryRepository
-import com.rfcoding.vibeplayer.feature.library.presentation.fakes.FakeMusicPlayer
-import com.rfcoding.vibeplayer.feature.library.presentation.fakes.FakeSongLocalDataSource
-import com.rfcoding.vibeplayer.feature.library.presentation.fakes.song
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi

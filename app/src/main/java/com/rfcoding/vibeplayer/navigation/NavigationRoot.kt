@@ -32,8 +32,11 @@ fun NavigationRoot(
         )
         libraryGraph(
             navController = navController,
-            onMiniPlayerClick = {
-                navController.navigate(PlayerGraph) { launchSingleTop = true }
+            onOpenPlayer = {
+                navController.navigateUp()
+                navController.navigate(PlayerGraph) {
+                    launchSingleTop = true
+                }
             },
         )
         playerGraph(

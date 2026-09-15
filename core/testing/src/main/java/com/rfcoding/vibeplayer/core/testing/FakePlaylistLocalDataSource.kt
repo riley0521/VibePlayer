@@ -1,4 +1,4 @@
-package com.rfcoding.vibeplayer.feature.player.presentation.fakes
+package com.rfcoding.vibeplayer.core.testing
 
 import com.rfcoding.vibeplayer.core.domain.playlist.Playlist
 import com.rfcoding.vibeplayer.core.domain.playlist.PlaylistLocalDataSource
@@ -52,8 +52,11 @@ class FakePlaylistLocalDataSource : PlaylistLocalDataSource {
         return Result.Success(Unit)
     }
 
-    override suspend fun removeSongFromPlaylist(playlistId: Long, songId: String): EmptyResult<DataError.Local> {
-        return Result.Success(Unit)
+    override suspend fun removeSongsFromPlaylist(
+        playlistId: Long,
+        songIds: List<String>,
+    ): EmptyResult<DataError.Local> {
+        return update(playlistId) { playlist -> playlist.copy(songs = playlist.songs.filterNot { it.id in songIds }) }
     }
 
     private fun update(playlistId: Long, transform: (Playlist) -> Playlist): EmptyResult<DataError.Local> {

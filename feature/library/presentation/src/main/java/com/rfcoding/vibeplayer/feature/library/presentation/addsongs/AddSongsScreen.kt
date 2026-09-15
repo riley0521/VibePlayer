@@ -4,18 +4,13 @@ import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -24,25 +19,22 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rfcoding.vibeplayer.core.designsystem.components.SelectableSongCard
-import com.rfcoding.vibeplayer.core.designsystem.components.VibeButton
-import com.rfcoding.vibeplayer.core.designsystem.components.VibeCheckbox
 import com.rfcoding.vibeplayer.core.designsystem.components.VibeInnerTopBar
 import com.rfcoding.vibeplayer.core.designsystem.components.VibeSearchField
-import com.rfcoding.vibeplayer.core.designsystem.components.VibeSelectableListItemRow
 import com.rfcoding.vibeplayer.core.designsystem.components.bottomFade
 import com.rfcoding.vibeplayer.core.designsystem.theme.VibePlayerTheme
 import com.rfcoding.vibeplayer.core.presentation.ObserveAsEvents
 import com.rfcoding.vibeplayer.core.presentation.SongUi
 import com.rfcoding.vibeplayer.core.presentation.currentDeviceConfiguration
 import com.rfcoding.vibeplayer.feature.library.presentation.R
+import com.rfcoding.vibeplayer.feature.library.presentation.components.BottomActionButton
+import com.rfcoding.vibeplayer.feature.library.presentation.components.SelectAllRow
+import com.rfcoding.vibeplayer.feature.library.presentation.components.TabletBottomActionButtonWidth
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 // VibeInnerTopBar already pads itself to Figma's mobile 10dp; tablets add the missing 8dp.
 private val TabletTopBarPadding = 8.dp
-
-/** Figma keeps the tablet OK button a centered 480dp pill rather than letting it span the screen. */
-private val TabletOkButtonWidth = 480.dp
 
 @Composable
 fun AddSongsRoot(
@@ -115,9 +107,10 @@ fun AddSongsScreen(
         },
         bottomBar = {
             if (state.hasSelection) {
-                OkButton(
+                BottomActionButton(
+                    text = stringResource(R.string.ok),
                     onClick = { onAction(AddSongsAction.OnOkClick) },
-                    maxWidth = if (isMobile) Dp.Unspecified else TabletOkButtonWidth,
+                    maxWidth = if (isMobile) Dp.Unspecified else TabletBottomActionButtonWidth,
                 )
             }
         },
@@ -147,50 +140,6 @@ fun AddSongsScreen(
                 )
             }
         }
-    }
-}
-
-/** The 52dp header row: the shared 12dp row padding around a 28dp checkbox. */
-@Composable
-private fun SelectAllRow(
-    selected: Boolean,
-    onSelectedChange: (Boolean) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    VibeSelectableListItemRow(
-        selected = selected,
-        onSelectedChange = onSelectedChange,
-        modifier = modifier,
-    ) {
-        VibeCheckbox(checked = selected, onCheckedChange = null)
-        Text(
-            text = stringResource(R.string.select_all),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
-    }
-}
-
-@Composable
-private fun OkButton(
-    onClick: () -> Unit,
-    maxWidth: Dp,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .navigationBarsPadding()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        VibeButton(
-            text = stringResource(R.string.ok),
-            onClick = onClick,
-            modifier = Modifier
-                .widthIn(max = maxWidth)
-                .fillMaxWidth(),
-        )
     }
 }
 

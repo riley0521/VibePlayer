@@ -9,8 +9,8 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isTrue
 import com.rfcoding.vibeplayer.core.domain.util.DataError
-import com.rfcoding.vibeplayer.core.presentation.fakes.FakePlaylistLocalDataSource
-import com.rfcoding.vibeplayer.core.presentation.fakes.playlist
+import com.rfcoding.vibeplayer.core.testing.FakePlaylistLocalDataSource
+import com.rfcoding.vibeplayer.core.testing.playlist
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher

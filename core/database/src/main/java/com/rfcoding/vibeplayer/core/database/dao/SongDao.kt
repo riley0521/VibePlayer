@@ -29,6 +29,14 @@ interface SongDao {
     @Query("UPDATE songs SET isFavorite = :isFavorite WHERE id = :songId")
     suspend fun setFavorite(songId: String, isFavorite: Boolean)
 
+    @Query("UPDATE songs SET isFavorite = :isFavorite WHERE id IN (:songIds)")
+    suspend fun setFavoriteByIds(songIds: List<String>, isFavorite: Boolean)
+
+    @Transaction
+    suspend fun setFavorites(songIds: List<String>, isFavorite: Boolean) {
+        songIds.chunked(MAX_BIND_ARGS).forEach { setFavoriteByIds(it, isFavorite) }
+    }
+
     /** Upserts the result of a full scan and prunes the songs it no longer found, atomically. */
     @Transaction
     suspend fun syncScannedSongs(scanned: List<SongEntity>) {
@@ -39,4 +47,5 @@ interface SongDao {
     }
 }
 
-private const val MAX_BIND_ARGS = 500
+/** Keeps a statement's bound variables under API 28 SQLite's cap of 999. */
+internal const val MAX_BIND_ARGS = 500

@@ -9,6 +9,7 @@ import com.rfcoding.vibeplayer.feature.library.presentation.addsongs.AddSongsRoo
 import com.rfcoding.vibeplayer.feature.library.presentation.library.LibraryRoot
 import com.rfcoding.vibeplayer.feature.library.presentation.playlistdetail.PlaylistDetailRoot
 import com.rfcoding.vibeplayer.feature.library.presentation.scan.ScanMusicRoot
+import com.rfcoding.vibeplayer.feature.library.presentation.search.SearchRoot
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -21,6 +22,9 @@ data object LibraryRoute
 data object ScanMusicRoute
 
 @Serializable
+data object SearchRoute
+
+@Serializable
 data class AddSongsRoute(val playlistId: Long)
 
 /** The Playlist Page. A null [playlistId] is the virtual Favourites, which has no row id. */
@@ -28,25 +32,33 @@ data class AddSongsRoute(val playlistId: Long)
 data class PlaylistDetailRoute(val playlistId: Long? = null)
 
 /**
- * Library → Scan music, Library → Playlist Page and Library → Add songs stay inside this feature, so the graph navigates on its
- * own. Opening the player crosses into another feature, so `:app` handles [onMiniPlayerClick].
+ * Library → Scan music, Search, Playlist Page and Add songs stay inside this feature, so the graph
+ * navigates on its own. Opening the player (from the mini player or a search result) crosses into
+ * another feature, so `:app` handles [onOpenPlayer].
  */
 fun NavGraphBuilder.libraryGraph(
     navController: NavController,
-    onMiniPlayerClick: () -> Unit,
+    onOpenPlayer: () -> Unit,
 ) {
     navigation<LibraryGraph>(startDestination = LibraryRoute) {
         composable<LibraryRoute> {
             LibraryRoot(
                 onScanClick = { navController.navigate(ScanMusicRoute) },
+                onSearchClick = { navController.navigate(SearchRoute) },
                 onPlaylistCreated = { playlistId -> navController.navigate(AddSongsRoute(playlistId)) },
                 onPlaylistClick = { playlistId -> navController.navigate(PlaylistDetailRoute(playlistId)) },
-                onMiniPlayerClick = onMiniPlayerClick,
+                onMiniPlayerClick = onOpenPlayer,
             )
         }
         composable<ScanMusicRoute> {
             ScanMusicRoot(
                 onNavigateBack = { navController.navigateUp() },
+            )
+        }
+        composable<SearchRoute> {
+            SearchRoot(
+                onNavigateBack = { navController.navigateUp() },
+                onNavigateToPlayer = onOpenPlayer,
             )
         }
         composable<PlaylistDetailRoute> { backStackEntry ->

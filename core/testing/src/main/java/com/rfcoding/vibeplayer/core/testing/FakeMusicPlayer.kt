@@ -1,4 +1,4 @@
-package com.rfcoding.vibeplayer.feature.library.presentation.fakes
+package com.rfcoding.vibeplayer.core.testing
 
 import com.rfcoding.vibeplayer.core.domain.player.MusicPlayer
 import com.rfcoding.vibeplayer.core.domain.player.PlaybackState
@@ -13,6 +13,8 @@ class FakeMusicPlayer : MusicPlayer {
     var togglePlayPauseCount = 0
     var skipToNextCount = 0
     var skipToPreviousCount = 0
+    var toggleShuffleCount = 0
+    val repeatModes = mutableListOf<RepeatMode>()
     val seekPositions = mutableListOf<Long>()
 
     override suspend fun play(queue: List<Song>) {
@@ -35,7 +37,11 @@ class FakeMusicPlayer : MusicPlayer {
         seekPositions += positionMillis
     }
 
-    override suspend fun setRepeatMode(repeatMode: RepeatMode) = Unit
+    override suspend fun setRepeatMode(repeatMode: RepeatMode) {
+        repeatModes += repeatMode
+    }
 
-    override suspend fun toggleShuffle() = Unit
+    override suspend fun toggleShuffle() {
+        toggleShuffleCount++
+    }
 }

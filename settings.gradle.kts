@@ -35,6 +35,7 @@ include(":core:database")
 include(":core:player")
 include(":core:presentation")
 include(":core:design-system")
+include(":core:testing")
 
 include(":feature:permission:presentation")
 

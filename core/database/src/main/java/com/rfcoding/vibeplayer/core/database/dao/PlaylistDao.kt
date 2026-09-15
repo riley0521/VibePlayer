@@ -37,6 +37,11 @@ interface PlaylistDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertCrossRefs(crossRefs: List<PlaylistSongCrossRef>)
 
-    @Query("DELETE FROM playlist_song_cross_ref WHERE playlistId = :playlistId AND songId = :songId")
-    suspend fun deleteCrossRef(playlistId: Long, songId: String)
+    @Query("DELETE FROM playlist_song_cross_ref WHERE playlistId = :playlistId AND songId IN (:songIds)")
+    suspend fun deleteCrossRefsByIds(playlistId: Long, songIds: List<String>)
+
+    @Transaction
+    suspend fun deleteCrossRefs(playlistId: Long, songIds: List<String>) {
+        songIds.chunked(MAX_BIND_ARGS).forEach { deleteCrossRefsByIds(playlistId, it) }
+    }
 }

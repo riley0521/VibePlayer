@@ -10,10 +10,10 @@ import assertk.assertions.isTrue
 import com.rfcoding.vibeplayer.core.domain.util.DataError
 import com.rfcoding.vibeplayer.core.presentation.UiText
 import com.rfcoding.vibeplayer.core.presentation.toPlaylistUi
-import com.rfcoding.vibeplayer.feature.player.presentation.fakes.FakePlaylistLocalDataSource
-import com.rfcoding.vibeplayer.feature.player.presentation.fakes.FakeSongLocalDataSource
-import com.rfcoding.vibeplayer.feature.player.presentation.fakes.playlist
-import com.rfcoding.vibeplayer.feature.player.presentation.fakes.song
+import com.rfcoding.vibeplayer.core.testing.FakePlaylistLocalDataSource
+import com.rfcoding.vibeplayer.core.testing.FakeSongLocalDataSource
+import com.rfcoding.vibeplayer.core.testing.playlist
+import com.rfcoding.vibeplayer.core.testing.song
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
