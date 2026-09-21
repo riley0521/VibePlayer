@@ -1,5 +1,6 @@
 package com.rfcoding.vibeplayer.feature.library.data
 
+import android.util.Log
 import com.rfcoding.vibeplayer.core.domain.song.Song
 import com.rfcoding.vibeplayer.core.domain.song.SongLocalDataSource
 import com.rfcoding.vibeplayer.core.domain.util.DataError
@@ -8,9 +9,11 @@ import com.rfcoding.vibeplayer.core.domain.util.map
 import com.rfcoding.vibeplayer.feature.library.domain.MusicLibraryRepository
 import com.rfcoding.vibeplayer.feature.library.domain.MusicScanner
 import com.rfcoding.vibeplayer.feature.library.domain.ScanFilters
+import com.rfcoding.vibeplayer.feature.library.domain.ScannedSong
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.UUID
+import kotlin.system.measureTimeMillis
 import kotlin.time.Clock
 
 /** Syncs what the MediaStore scanner finds into Room. */
@@ -26,7 +29,14 @@ class MediaStoreMusicLibraryRepository(
 
     override suspend fun scanMusic(filters: ScanFilters): Result<Int, DataError.Local> {
         return scanMutex.withLock {
-            val scanned = when (val result = scanner.scan(filters)) {
+
+            val result: Result<List<ScannedSong>, DataError.Local>
+            val millis = measureTimeMillis {
+                result = scanner.scan(filters)
+            }
+            Log.d("MediaStoreMusicLibraryRepository", "Time taken: ${millis}ms")
+
+            val scanned = when (result) {
                 is Result.Error -> return@withLock result
                 is Result.Success -> result.data
             }

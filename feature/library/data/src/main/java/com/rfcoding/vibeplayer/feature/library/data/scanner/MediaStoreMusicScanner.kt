@@ -13,9 +13,15 @@ import com.rfcoding.vibeplayer.feature.library.domain.MusicScanner
 import com.rfcoding.vibeplayer.feature.library.domain.ScanFilters
 import com.rfcoding.vibeplayer.feature.library.domain.ScannedSong
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
@@ -26,9 +32,11 @@ import java.io.IOException
  */
 class MediaStoreMusicScanner(
     private val context: Context,
+    private val applicationScope: CoroutineScope
 ) : MusicScanner {
 
     private val artworkDir = File(context.filesDir, ARTWORK_DIR_NAME)
+    private val seenKeysMutex = Mutex()
 
     override suspend fun scan(filters: ScanFilters): Result<List<ScannedSong>, DataError.Local> {
         return withContext(Dispatchers.IO) {
@@ -44,18 +52,27 @@ class MediaStoreMusicScanner(
 
             artworkDir.mkdirs()
             val seenKeys = HashSet<Pair<String, String?>>()
+
+            val keptArtworkMutex = Mutex()
             val keptArtwork = HashSet<String>()
-            val songs = files.mapNotNull { file ->
-                ensureActive()
-                readSong(file, filters, seenKeys)?.also { song ->
-                    if (song.imageUri != null) keptArtwork += file.artworkFileName
+            val songs = files.map { file ->
+                async {
+                    readSong(file, filters, seenKeys)?.also { song ->
+                        if (song.imageUri != null) {
+                            keptArtworkMutex.withLock {
+                                keptArtwork += file.artworkFileName
+                            }
+                        }
+                    }
                 }
-            }
+            }.awaitAll().filterNotNull()
 
             // Every kept song rewrote or confirmed its artwork above, so anything else is stale.
-            artworkDir.listFiles()
-                ?.filter { it.name !in keptArtwork }
-                ?.forEach { it.delete() }
+            applicationScope.launch(Dispatchers.IO) {
+                artworkDir.listFiles()
+                    ?.filter { it.name !in keptArtwork }
+                    ?.forEach { it.delete() }
+            }
 
             Result.Success(songs)
         }
@@ -146,7 +163,12 @@ class MediaStoreMusicScanner(
                 ?.toLongOrNull()
             if (durationMillis == null || !filters.acceptsDuration(durationMillis)) return null
 
-            if (!seenKeys.add(title to artistName)) return null
+            val isAlreadyAdded = seenKeysMutex.withLock {
+                !seenKeys.add(title to artistName)
+            }
+            if (isAlreadyAdded) {
+                return null
+            }
 
             val picture = retriever.embeddedPicture
 
