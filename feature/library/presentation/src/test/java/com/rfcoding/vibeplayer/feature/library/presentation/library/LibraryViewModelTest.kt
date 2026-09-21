@@ -1,6 +1,7 @@
 package com.rfcoding.vibeplayer.feature.library.presentation.library
 
 import app.cash.turbine.test
+import assertk.all
 import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.hasSize
@@ -8,15 +9,19 @@ import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNull
+import assertk.assertions.prop
 import com.rfcoding.vibeplayer.core.domain.player.PlaybackState
 import com.rfcoding.vibeplayer.core.domain.player.RepeatMode
 import com.rfcoding.vibeplayer.core.domain.util.DataError
 import com.rfcoding.vibeplayer.core.domain.util.Result
+import com.rfcoding.vibeplayer.core.presentation.UiText
 import com.rfcoding.vibeplayer.core.presentation.toSongUi
 import com.rfcoding.vibeplayer.core.testing.FakeMusicPlayer
 import com.rfcoding.vibeplayer.core.testing.FakeSongLocalDataSource
 import com.rfcoding.vibeplayer.core.testing.song
+import com.rfcoding.vibeplayer.feature.library.domain.IncompleteScan
 import com.rfcoding.vibeplayer.feature.library.domain.ScanFilters
+import com.rfcoding.vibeplayer.feature.library.presentation.R
 import com.rfcoding.vibeplayer.feature.library.presentation.fakes.FakeMusicLibraryRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -102,6 +107,22 @@ class LibraryViewModelTest {
             expectNoEvents()
         }
         assertThat(viewModel.state.value.status).isEqualTo(LibraryStatus.Loaded)
+    }
+
+    @Test
+    fun `songs a background batch couldn't store are reported with their count`() = runTest {
+        songDataSource.songsMutable.value = listOf(song("a"))
+        val viewModel = createViewModel()
+
+        viewModel.events.test {
+            repository.incompleteScans.emit(IncompleteScan(skippedSongCount = 3, error = DataError.Local.DISK_FULL))
+
+            val message = (awaitItem() as LibraryEvent.Error).message
+            assertThat(message).isInstanceOf<UiText.PluralsResource>().all {
+                prop(UiText.PluralsResource::id).isEqualTo(R.plurals.scan_songs_skipped_disk_full)
+                prop(UiText.PluralsResource::quantity).isEqualTo(3)
+            }
+        }
     }
 
     @Test

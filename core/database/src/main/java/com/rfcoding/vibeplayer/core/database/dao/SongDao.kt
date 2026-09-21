@@ -5,7 +5,8 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
 import com.rfcoding.vibeplayer.core.database.entity.SongEntity
-import com.rfcoding.vibeplayer.core.database.song.diffScannedSongs
+import com.rfcoding.vibeplayer.core.database.song.mergeScannedSongs
+import com.rfcoding.vibeplayer.core.database.song.staleSongIds
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -37,13 +38,22 @@ interface SongDao {
         songIds.chunked(MAX_BIND_ARGS).forEach { setFavoriteByIds(it, isFavorite) }
     }
 
-    /** Upserts the result of a full scan and prunes the songs it no longer found, atomically. */
+    /**
+     * Upserts one batch of a scan. Songs already stored keep their id, favourite flag, creation
+     * date and playlist links.
+     */
     @Transaction
-    suspend fun syncScannedSongs(scanned: List<SongEntity>) {
-        val diff = diffScannedSongs(existing = getAllSongs(), scanned = scanned)
-        upsertSongs(diff.upserts)
+    suspend fun upsertScannedSongs(scanned: List<SongEntity>) {
+        upsertSongs(mergeScannedSongs(existing = getAllSongs(), scanned = scanned))
+    }
+
+    /** Deletes the stored songs a full scan, [scanned], no longer found. */
+    @Transaction
+    suspend fun pruneSongsMissingFrom(scanned: List<SongEntity>) {
         // API 28's SQLite caps a statement at 999 bound variables.
-        diff.deletedIds.chunked(MAX_BIND_ARGS).forEach { deleteSongsByIds(it) }
+        staleSongIds(existing = getAllSongs(), scanned = scanned)
+            .chunked(MAX_BIND_ARGS)
+            .forEach { deleteSongsByIds(it) }
     }
 }
 

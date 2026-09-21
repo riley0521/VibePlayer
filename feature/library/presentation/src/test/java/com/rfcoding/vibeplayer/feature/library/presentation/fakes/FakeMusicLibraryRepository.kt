@@ -2,11 +2,15 @@ package com.rfcoding.vibeplayer.feature.library.presentation.fakes
 
 import com.rfcoding.vibeplayer.core.domain.util.DataError
 import com.rfcoding.vibeplayer.core.domain.util.Result
+import com.rfcoding.vibeplayer.feature.library.domain.IncompleteScan
 import com.rfcoding.vibeplayer.feature.library.domain.MusicLibraryRepository
 import com.rfcoding.vibeplayer.feature.library.domain.ScanFilters
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.flow.MutableSharedFlow
 
 class FakeMusicLibraryRepository : MusicLibraryRepository {
+    override val incompleteScans = MutableSharedFlow<IncompleteScan>()
+
     var result: Result<Int, DataError.Local> = Result.Success(0)
     /** When set, a scan suspends until it completes, which keeps the scan "running". */
     var gate: CompletableDeferred<Unit>? = null

@@ -5,6 +5,14 @@
     <string name="no_music_found">No music found</string>
     <string name="no_music_found_description">Try scanning again or check your folders.</string>
     <string name="scan_again">Scan again</string>
+    <plurals name="scan_songs_skipped_disk_full">
+        <item quantity="one">%d song couldn\'t be added because your storage is full</item>
+        <item quantity="other">%d songs couldn\'t be added because your storage is full</item>
+    </plurals>
+    <plurals name="scan_songs_skipped">
+        <item quantity="one">%d song couldn\'t be added</item>
+        <item quantity="other">%d songs couldn\'t be added</item>
+    </plurals>
 
     <string name="tab_songs">Songs</string>
     <string name="tab_playlist">Playlist</string>

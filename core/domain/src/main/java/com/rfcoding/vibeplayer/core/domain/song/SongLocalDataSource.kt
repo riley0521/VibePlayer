@@ -18,9 +18,11 @@ interface SongLocalDataSource {
     suspend fun setFavorites(songIds: List<String>, isFavorite: Boolean): EmptyResult<DataError.Local>
 
     /**
-     * Makes the stored songs match [songs], the result of a full scan: songs already stored keep
-     * their id, favourite flag, creation date and playlist links; songs missing from [songs] are
-     * deleted.
+     * Stores one batch of scanned songs. Songs already stored keep their id, favourite flag,
+     * creation date and playlist links.
      */
-    suspend fun syncScannedSongs(songs: List<Song>): EmptyResult<DataError.Local>
+    suspend fun upsertScannedSongs(songs: List<Song>): EmptyResult<DataError.Local>
+
+    /** Deletes the stored songs missing from [songs], the result of a full scan. */
+    suspend fun pruneSongsMissingFrom(songs: List<Song>): EmptyResult<DataError.Local>
 }

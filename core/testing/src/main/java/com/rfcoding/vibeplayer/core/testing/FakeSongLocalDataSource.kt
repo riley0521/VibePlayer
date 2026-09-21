@@ -16,11 +16,17 @@ class FakeSongLocalDataSource : SongLocalDataSource {
     /** Set to make [setFavorite] and [setFavorites] fail without changing anything. */
     var setFavoriteError: DataError.Local? = null
 
-    /** Set to make [syncScannedSongs] fail; the attempt is still recorded in [syncedSongs]. */
-    var syncError: DataError.Local? = null
+    /** Set to make [upsertScannedSongs] fail; the attempt is still recorded in [upsertedBatches]. */
+    var upsertError: DataError.Local? = null
 
-    /** Every list passed to [syncScannedSongs], in call order. */
-    val syncedSongs = mutableListOf<List<Song>>()
+    /** Set to make [pruneSongsMissingFrom] fail; the attempt is still recorded in [prunedWith]. */
+    var pruneError: DataError.Local? = null
+
+    /** Every list passed to [upsertScannedSongs], in call order. */
+    val upsertedBatches = mutableListOf<List<Song>>()
+
+    /** Every list passed to [pruneSongsMissingFrom], in call order. */
+    val prunedWith = mutableListOf<List<Song>>()
 
     override fun observeFavoriteSongs(): Flow<List<Song>> = songsMutable.map { all -> all.filter { it.isFavorite } }
 
@@ -34,10 +40,19 @@ class FakeSongLocalDataSource : SongLocalDataSource {
         return Result.Success(Unit)
     }
 
-    override suspend fun syncScannedSongs(songs: List<Song>): EmptyResult<DataError.Local> {
-        syncedSongs += songs
-        syncError?.let { return Result.Error(it) }
-        songsMutable.value = songs
+    override suspend fun upsertScannedSongs(songs: List<Song>): EmptyResult<DataError.Local> {
+        upsertedBatches += songs
+        upsertError?.let { return Result.Error(it) }
+        val upsertedIds = songs.mapTo(HashSet()) { it.id }
+        songsMutable.value = songsMutable.value.filter { it.id !in upsertedIds } + songs
+        return Result.Success(Unit)
+    }
+
+    override suspend fun pruneSongsMissingFrom(songs: List<Song>): EmptyResult<DataError.Local> {
+        prunedWith += songs
+        pruneError?.let { return Result.Error(it) }
+        val keptIds = songs.mapTo(HashSet()) { it.id }
+        songsMutable.value = songsMutable.value.filter { it.id in keptIds }
         return Result.Success(Unit)
     }
 }

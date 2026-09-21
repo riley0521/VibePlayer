@@ -59,6 +59,11 @@ class LibraryViewModel(
             }
         }.launchIn(viewModelScope)
 
+        // A scan's later batches sync after the scan UI is gone, so their failures surface here.
+        musicLibraryRepository.incompleteScans
+            .onEach { eventChannel.send(LibraryEvent.Error(it.toUiText())) }
+            .launchIn(viewModelScope)
+
         musicPlayer.playbackState
             .onEach { playback -> _state.update { it.copy(nowPlaying = playback.toNowPlayingUi()) } }
             .launchIn(viewModelScope)

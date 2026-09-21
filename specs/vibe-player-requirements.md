@@ -41,6 +41,7 @@ Note: Mobile layouts layers have the same name to Tablet layouts for easy lookup
 **First time** (Figma layer name: Main Page - Scanning / Main Page - No music found): 
 - The first time user use the app, it will scan the music folder after granting the permission. Show the Scanning device layout.
   - Upsert all the detected music files to database, the unique ID of the row is the file name, update the row if already exists. 
+  - Scan and sync in batches of 100 music files. Once the first batch is stored, hide the scanning UI; the remaining batches keep syncing in the background, and songs missing from the whole scan are deleted only after every batch succeeded. If a later batch can't be stored, tell the user how many songs were skipped (e.g. storage full).
 - When the app does not detect any music, show the no music found layout, when the user press the 'Scan again' button, just scan the folder again.
 
 **Top app bar**:

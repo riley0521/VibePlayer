@@ -34,7 +34,11 @@ class RoomSongDataSource(
         return safeDatabaseUpdate { songDao.setFavorites(songIds, isFavorite) }
     }
 
-    override suspend fun syncScannedSongs(songs: List<Song>): EmptyResult<DataError.Local> {
-        return safeDatabaseUpdate { songDao.syncScannedSongs(songs.map { it.toSongEntity() }) }
+    override suspend fun upsertScannedSongs(songs: List<Song>): EmptyResult<DataError.Local> {
+        return safeDatabaseUpdate { songDao.upsertScannedSongs(songs.map { it.toSongEntity() }) }
+    }
+
+    override suspend fun pruneSongsMissingFrom(songs: List<Song>): EmptyResult<DataError.Local> {
+        return safeDatabaseUpdate { songDao.pruneSongsMissingFrom(songs.map { it.toSongEntity() }) }
     }
 }

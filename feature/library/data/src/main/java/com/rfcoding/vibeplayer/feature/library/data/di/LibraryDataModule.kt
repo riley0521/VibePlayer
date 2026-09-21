@@ -10,5 +10,5 @@ import org.koin.dsl.module
 
 val libraryDataModule = module {
     singleOf(::MediaStoreMusicScanner) { bind<MusicScanner>() }
-    single<MusicLibraryRepository> { MediaStoreMusicLibraryRepository(get(), get()) }
+    single<MusicLibraryRepository> { MediaStoreMusicLibraryRepository(get(), get(), get()) }
 }

@@ -10,6 +10,7 @@ import android.provider.MediaStore
 import com.rfcoding.vibeplayer.core.domain.util.DataError
 import com.rfcoding.vibeplayer.core.domain.util.Result
 import com.rfcoding.vibeplayer.feature.library.domain.MusicScanner
+import com.rfcoding.vibeplayer.feature.library.domain.SCAN_BATCH_SIZE
 import com.rfcoding.vibeplayer.feature.library.domain.ScanFilters
 import com.rfcoding.vibeplayer.feature.library.domain.ScannedSong
 import kotlinx.coroutines.CancellationException
@@ -17,12 +18,15 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
 
@@ -38,45 +42,44 @@ class MediaStoreMusicScanner(
     private val artworkDir = File(context.filesDir, ARTWORK_DIR_NAME)
     private val seenKeysMutex = Mutex()
 
-    override suspend fun scan(filters: ScanFilters): Result<List<ScannedSong>, DataError.Local> {
-        return withContext(Dispatchers.IO) {
-            val files = try {
-                queryMusicFiles(filters)
-            } catch (_: Exception) {
-                currentCoroutineContext().ensureActive()
-                // SecurityException when the permission was revoked, or a provider failure.
-                return@withContext Result.Error(DataError.Local.UNKNOWN)
-            }
-            // Checkpoint after blocking operation.
-            ensureActive()
-
-            artworkDir.mkdirs()
-            val seenKeys = HashSet<Pair<String, String?>>()
-
-            val keptArtworkMutex = Mutex()
-            val keptArtwork = HashSet<String>()
-            val songs = files.map { file ->
-                async {
-                    readSong(file, filters, seenKeys)?.also { song ->
-                        if (song.imageUri != null) {
-                            keptArtworkMutex.withLock {
-                                keptArtwork += file.artworkFileName
-                            }
-                        }
-                    }
-                }
-            }.awaitAll().filterNotNull()
-
-            // Every kept song rewrote or confirmed its artwork above, so anything else is stale.
-            applicationScope.launch(Dispatchers.IO) {
-                artworkDir.listFiles()
-                    ?.filter { it.name !in keptArtwork }
-                    ?.forEach { it.delete() }
-            }
-
-            Result.Success(songs)
+    override fun scan(filters: ScanFilters): Flow<Result<List<ScannedSong>, DataError.Local>> = flow {
+        val files = try {
+            queryMusicFiles(filters)
+        } catch (_: Exception) {
+            currentCoroutineContext().ensureActive()
+            // SecurityException when the permission was revoked, or a provider failure.
+            emit(Result.Error(DataError.Local.UNKNOWN))
+            return@flow
         }
-    }
+        // Checkpoint after blocking operation.
+        currentCoroutineContext().ensureActive()
+
+        artworkDir.mkdirs()
+        // Scan-wide, so duplicates are dropped across batches too.
+        val seenKeys = HashSet<Pair<String, String?>>()
+        val keptArtwork = HashSet<String>()
+
+        files.chunked(SCAN_BATCH_SIZE).forEach { batch ->
+            val songs = coroutineScope {
+                batch.map { file ->
+                    async { readSong(file, filters, seenKeys) }
+                }.awaitAll()
+            }
+            // Collected after awaitAll, so the set needs no lock.
+            batch.zip(songs).forEach { (file, song) ->
+                if (song?.imageUri != null) keptArtwork += file.artworkFileName
+            }
+            emit(Result.Success(songs.filterNotNull()))
+        }
+
+        // Every kept song rewrote or confirmed its artwork above, so anything else is stale. A
+        // cancelled scan never gets here, so its partial set deletes nothing.
+        applicationScope.launch(Dispatchers.IO) {
+            artworkDir.listFiles()
+                ?.filter { it.name !in keptArtwork }
+                ?.forEach { it.delete() }
+        }
+    }.flowOn(Dispatchers.IO)
 
     /** Rows that pass the file-name, folder and size rules, oldest first so duplicates resolve stably. */
     private fun queryMusicFiles(filters: ScanFilters): List<MusicFile> {

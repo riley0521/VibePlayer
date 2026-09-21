@@ -13,10 +13,9 @@ class SongSyncDiffTest {
     fun `a song new to the library is inserted as scanned`() {
         val scanned = song(id = "new", title = "Intro")
 
-        val diff = diffScannedSongs(existing = emptyList(), scanned = listOf(scanned))
+        val upserts = mergeScannedSongs(existing = emptyList(), scanned = listOf(scanned))
 
-        assertThat(diff.upserts).containsExactly(scanned)
-        assertThat(diff.deletedIds).isEmpty()
+        assertThat(upserts).containsExactly(scanned)
     }
 
     @Test
@@ -42,12 +41,12 @@ class SongSyncDiffTest {
             createdAt = 2,
         )
 
-        val diff = diffScannedSongs(existing = listOf(stored), scanned = listOf(scanned))
+        val upserts = mergeScannedSongs(existing = listOf(stored), scanned = listOf(scanned))
 
-        assertThat(diff.upserts).containsExactly(
+        assertThat(upserts).containsExactly(
             scanned.copy(id = "stored", isFavorite = true, createdAt = 1),
         )
-        assertThat(diff.deletedIds).isEmpty()
+        assertThat(staleSongIds(existing = listOf(stored), scanned = listOf(scanned))).isEmpty()
     }
 
     @Test
@@ -55,24 +54,22 @@ class SongSyncDiffTest {
         val kept = song(id = "kept", title = "Kept")
         val gone = song(id = "gone", title = "Gone")
 
-        val diff = diffScannedSongs(
+        val staleIds = staleSongIds(
             existing = listOf(kept, gone),
             scanned = listOf(song(id = "fresh", title = "Kept")),
         )
 
-        assertThat(diff.upserts.map { it.id }).containsExactly("kept")
-        assertThat(diff.deletedIds).containsExactly("gone")
+        assertThat(staleIds).containsExactly("gone")
     }
 
     @Test
     fun `an empty scan deletes every stored song`() {
-        val diff = diffScannedSongs(
+        val staleIds = staleSongIds(
             existing = listOf(song(id = "a", title = "A"), song(id = "b", title = "B")),
             scanned = emptyList(),
         )
 
-        assertThat(diff.upserts).isEmpty()
-        assertThat(diff.deletedIds).containsExactlyInAnyOrder("a", "b")
+        assertThat(staleIds).containsExactlyInAnyOrder("a", "b")
     }
 
     @Test
@@ -80,9 +77,9 @@ class SongSyncDiffTest {
         val first = song(id = "first", title = "Intro", artistName = "Band", fileUri = "content://1")
         val second = song(id = "second", title = "Intro", artistName = "Band", fileUri = "content://2")
 
-        val diff = diffScannedSongs(existing = emptyList(), scanned = listOf(first, second))
+        val upserts = mergeScannedSongs(existing = emptyList(), scanned = listOf(first, second))
 
-        assertThat(diff.upserts).containsExactly(first)
+        assertThat(upserts).containsExactly(first)
     }
 
     @Test
@@ -90,10 +87,8 @@ class SongSyncDiffTest {
         val stored = song(id = "stored", title = "Intro", artistName = SongEntity.UNKNOWN_ARTIST)
         val byBand = song(id = "band", title = "Intro", artistName = "Band")
 
-        val diff = diffScannedSongs(existing = listOf(stored), scanned = listOf(byBand))
-
-        assertThat(diff.upserts).containsExactly(byBand)
-        assertThat(diff.deletedIds).containsExactly("stored")
+        assertThat(mergeScannedSongs(existing = listOf(stored), scanned = listOf(byBand))).containsExactly(byBand)
+        assertThat(staleSongIds(existing = listOf(stored), scanned = listOf(byBand))).containsExactly("stored")
     }
 
     private fun song(
