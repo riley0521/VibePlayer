@@ -3,7 +3,7 @@
 An Android music player that runs entirely offline (Kotlin, Jetpack Compose, Material 3). It scans the device's `Music/` folder, stores songs and playlists in Room, and plays audio through Media3. The app never uses the network. `minSdk 28`, `compileSdk`/`targetSdk 37`, package `com.rfcoding.vibeplayer`.
 
 > **Current state:** every module under "Target module layout" exists and is wired into `:app`, but most contain no code yet. The UI, however, is done: all screens and all design-system components are already implemented, so there is no need to open Figma unless the user asks for it. Build config lives in `:build-logic` convention plugins, applied as `alias(libs.plugins.vibeplayer.<name>)`:
-> `android.application`, `android.library`, `android.feature` (library + Compose + Koin + serialization, plus `:core:domain`, `:core:presentation`, `:core:design-system`, navigation and lifecycle-compose), `domain.module` (pure Kotlin; its `testDebugUnitTest` task aliases `test`), `compose`, `koin`, `room` and `kotlinx.serialization`.
+> `android.application`, `android.library`, `android.feature` (library + Compose + Koin + serialization, plus `:core:domain`, `:core:presentation`, `:core:design-system`, navigation and lifecycle-compose), `android.instrumented-testing` (opt-in: the AndroidJUnit runner plus androidx.test and `room-testing` on `androidTestImplementation`), `domain.module` (pure Kotlin; its `testDebugUnitTest` task aliases `test`), `compose`, `koin`, `room` and `kotlinx.serialization`.
 > Apply these plugins instead of writing Android config by hand, and add every new dependency to `gradle/libs.versions.toml`.
 
 ## Where to find things
@@ -22,16 +22,23 @@ An Android music player that runs entirely offline (Kotlin, Jetpack Compose, Mat
 ./gradlew testDebugUnitTest                              # all JVM unit tests
 ./gradlew :core:data:testDebugUnitTest                   # one module
 ./gradlew :core:domain:test --tests "*PlaylistNameValidatorTest"
+./gradlew :core:database:assembleDebugAndroidTest        # instrumented tests must compile
+./gradlew connectedDebugAndroidTest                      # instrumented tests; CI runs these on an emulator
 ```
 
-Don't launch an emulator or device. The user checks the UI manually.
+Write instrumented tests under `src/androidTest` where they are the only honest way to cover
+something — a Room migration is the example, since its SQL only means anything against real SQLite.
+Verify them with `assembleDebugAndroidTest`, which needs no device, and say plainly that you did not
+execute them. **Never launch an emulator or device yourself:** running instrumented tests and every
+manual check of the UI belong to the user, and CI's `instrumentation-tests` job executes them.
 
 ## Target module layout
 
 ```
 :app                               VibePlayerApp (startKoin, applicationScope), MainActivity, NavHost, splash
 :build-logic                       convention plugins: android-application, android-library, android-feature,
-                                   domain-module, compose, koin, room, kotlinx-serialization
+                                   android-instrumented-testing, domain-module, compose, koin, room,
+                                   kotlinx-serialization
 :core:domain                       Result/DataError, Song, Playlist, SongRepository, PlaylistRepository, MusicPlayer,
                                    PlaylistNameValidator
 :core:data                         implementations of the core repositories/data sources, entity<->domain mappers
@@ -89,7 +96,7 @@ Apply these proactively, and use any other available skill when it fits (e.g. `s
 | `coroutines-convention` | Coroutines and Flow | `applicationScope` in `VibePlayerApp`, provided by Koin; `callbackFlow` for player listeners; a suspend wrapper for the `MediaController` future; `ensureActive()` after every `MediaMetadataRetriever` call |
 | `android-di-koin` | Wiring dependencies | One module per layer (`libraryDataModule`, …) assembled in `:app`; `koinViewModel()` only in Root composables |
 | `android-navigation` | Routes and graphs | `@Serializable` routes; `PermissionGraph`, `LibraryGraph`, `PlayerGraph`; cross-feature callbacks in `:app` (e.g. mini player → player) |
-| `android-testing` | Any change with logic | JUnit5 (`useJUnitPlatform()` set in the convention plugin), AssertK, Turbine, fakes rather than mocks, `UnconfinedTestDispatcher` |
+| `android-testing` | Any change with logic | JUnit5 (`useJUnitPlatform()` set in the convention plugin), AssertK, Turbine, fakes rather than mocks, `UnconfinedTestDispatcher`. JUnit5 covers `src/test` only: instrumented tests are JUnit4 + `AndroidJUnit4`, enabled per module with `alias(libs.plugins.vibeplayer.android.instrumented.testing)` |
 
 ## Using subagents
 
@@ -110,7 +117,11 @@ A task is finished only when:
 
 1. `./gradlew assembleDebug` succeeds.
 2. `./gradlew testDebugUnitTest` passes.
-3. New logic has unit tests wherever they add value:
+3. Any instrumented test you touched still compiles (`./gradlew :<module>:assembleDebugAndroidTest`);
+   CI runs it on an emulator, you don't.
+4. A Room migration has an instrumented `MigrationTestHelper` test that seeds the old version and
+   calls `runMigrationsAndValidate`. A pure-Kotlin test can't reach migration SQL.
+5. New logic has unit tests wherever they add value:
    - repositories and data sources, with fake DAOs or a fake scanner;
    - input validators, e.g. the playlist name;
    - pure functions with non-trivial logic: scan filters, the "directly inside `Music/`" path rule, the upsert/prune diff, search filtering, duration formatting, shuffle and queue logic;

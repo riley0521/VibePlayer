@@ -1,5 +1,6 @@
 package com.rfcoding.vibeplayer.core.database.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -28,4 +29,10 @@ data class PlaylistSongCrossRef(
     val playlistId: Long,
     val songId: String,
     val addedAt: Long,
+    /**
+     * Added in version 3. The song's 0-based place in the playlist, as set on the Edit playlist
+     * screen. Removals can leave gaps, because only the relative order is ever read.
+     */
+    @ColumnInfo(defaultValue = "0")
+    val position: Int = 0,
 )

@@ -9,5 +9,7 @@ android {
 dependencies {
     implementation(projects.feature.library.domain)
 
+    implementation(libs.reorderable)
+
     testImplementation(projects.core.testing)
 }

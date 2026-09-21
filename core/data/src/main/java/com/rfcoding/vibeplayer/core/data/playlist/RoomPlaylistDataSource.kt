@@ -3,7 +3,6 @@ package com.rfcoding.vibeplayer.core.data.playlist
 import com.rfcoding.vibeplayer.core.data.database.safeDatabaseUpdate
 import com.rfcoding.vibeplayer.core.database.dao.PlaylistDao
 import com.rfcoding.vibeplayer.core.database.entity.PlaylistEntity
-import com.rfcoding.vibeplayer.core.database.entity.PlaylistSongCrossRef
 import com.rfcoding.vibeplayer.core.domain.playlist.Playlist
 import com.rfcoding.vibeplayer.core.domain.playlist.PlaylistLocalDataSource
 import com.rfcoding.vibeplayer.core.domain.util.DataError
@@ -51,11 +50,7 @@ class RoomPlaylistDataSource(
         songIds: List<String>,
     ): EmptyResult<DataError.Local> {
         val addedAt = clock.now().toEpochMilliseconds()
-        return safeDatabaseUpdate {
-            playlistDao.insertCrossRefs(
-                songIds.map { PlaylistSongCrossRef(playlistId = playlistId, songId = it, addedAt = addedAt) },
-            )
-        }
+        return safeDatabaseUpdate { playlistDao.addCrossRefs(playlistId, songIds, addedAt) }
     }
 
     override suspend fun removeSongsFromPlaylist(
@@ -63,5 +58,12 @@ class RoomPlaylistDataSource(
         songIds: List<String>,
     ): EmptyResult<DataError.Local> {
         return safeDatabaseUpdate { playlistDao.deleteCrossRefs(playlistId, songIds) }
+    }
+
+    override suspend fun setPlaylistSongs(
+        playlistId: Long,
+        songIds: List<String>,
+    ): EmptyResult<DataError.Local> {
+        return safeDatabaseUpdate { playlistDao.setCrossRefOrder(playlistId, songIds) }
     }
 }

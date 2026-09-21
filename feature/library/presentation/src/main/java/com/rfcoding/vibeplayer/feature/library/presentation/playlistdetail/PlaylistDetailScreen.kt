@@ -64,12 +64,15 @@ private val ArtworkSize = 200.dp
 /**
  * @param playlistId the playlist to show, or null for the virtual Favourites.
  * @param onAddSongsClick only called for a real playlist; Favourites offers no Add Songs button.
+ * @param onEditPlaylistClick likewise: Favourites is built from the favourite flag, so it has no
+ * stored order to edit and falls back to delete mode instead.
  */
 @Composable
 fun PlaylistDetailRoot(
     playlistId: Long?,
     onNavigateBack: () -> Unit,
     onAddSongsClick: (playlistId: Long) -> Unit,
+    onEditPlaylistClick: (playlistId: Long) -> Unit,
     viewModel: PlaylistDetailViewModel = koinViewModel { parametersOf(playlistId) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -90,6 +93,10 @@ fun PlaylistDetailRoot(
             when (action) {
                 PlaylistDetailAction.OnBackClick -> onNavigateBack()
                 PlaylistDetailAction.OnAddSongsClick -> playlistId?.let(onAddSongsClick)
+                // A real playlist opens the Edit playlist page; Favourites enters delete mode.
+                PlaylistDetailAction.OnEditClick -> {
+                    if (playlistId != null) onEditPlaylistClick(playlistId) else viewModel.onAction(action)
+                }
                 else -> viewModel.onAction(action)
             }
         },
@@ -100,8 +107,9 @@ fun PlaylistDetailRoot(
  * Figma "Playlist Page" / "Playlist Page - Empty". The circular cover and the title scroll away with
  * the songs. On mobile the song count gets its own row under Shuffle/Play; tablets put both in one row.
  *
- * The pen icon enters delete mode, which reuses Add Songs' selection UI: a Select All row replaces the
- * Shuffle/Play header, the cards become checkable and a Delete button appears once something is ticked.
+ * On a real playlist the pen icon opens the Edit playlist page. On Favourites it enters delete mode
+ * instead, which reuses Add Songs' selection UI: a Select All row replaces the Shuffle/Play header, the
+ * cards become checkable and a Delete button appears once something is ticked.
  *
  * Like `PlaylistScreen`, the horizontal padding lives on each item, because the count row's end inset is
  * narrower (the add button's 44dp touch target overhangs).

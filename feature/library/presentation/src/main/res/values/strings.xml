@@ -52,6 +52,12 @@
 
     <string name="edit_songs">Edit songs</string>
     <string name="select_songs">Select songs</string>
+    <string name="edit_playlist">Edit playlist</string>
+    <string name="action_save">Save</string>
+    <string name="discard_changes_title">Discard Changes</string>
+    <string name="discard_changes_message">Your new song order and removals will be lost.</string>
+    <string name="action_discard">Discard</string>
+    <string name="action_keep_editing">Keep Editing</string>
     <string name="remove_songs_title">Remove Songs</string>
     <plurals name="remove_songs_message">
         <item quantity="one">Are you sure you want to remove %1$d song from %2$s?</item>

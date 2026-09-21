@@ -19,6 +19,9 @@ class FakePlaylistLocalDataSource : PlaylistLocalDataSource {
     /** Song ids passed to [addSongsToPlaylist], by playlist; the fake has no songs to attach them to. */
     val addedSongIds = mutableMapOf<Long, List<String>>()
 
+    /** Song ids passed to [setPlaylistSongs], by playlist, so tests can assert the saved order. */
+    val setSongIds = mutableMapOf<Long, List<String>>()
+
     override fun observePlaylists(): Flow<List<Playlist>> = playlists
 
     override fun observePlaylist(playlistId: Long): Flow<Playlist?> {
@@ -57,6 +60,15 @@ class FakePlaylistLocalDataSource : PlaylistLocalDataSource {
         songIds: List<String>,
     ): EmptyResult<DataError.Local> {
         return update(playlistId) { playlist -> playlist.copy(songs = playlist.songs.filterNot { it.id in songIds }) }
+    }
+
+    override suspend fun setPlaylistSongs(playlistId: Long, songIds: List<String>): EmptyResult<DataError.Local> {
+        val result = update(playlistId) { playlist ->
+            val songsById = playlist.songs.associateBy { it.id }
+            playlist.copy(songs = songIds.mapNotNull { songsById[it] })
+        }
+        if (result is Result.Success) setSongIds[playlistId] = songIds
+        return result
     }
 
     private fun update(playlistId: Long, transform: (Playlist) -> Playlist): EmptyResult<DataError.Local> {

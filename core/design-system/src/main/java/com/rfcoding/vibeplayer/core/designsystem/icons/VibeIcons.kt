@@ -47,6 +47,9 @@ object VibeIcons {
         @Composable get() = ImageVector.vectorResource(R.drawable.ic_linear_plus)
     val MenuDots: ImageVector
         @Composable get() = ImageVector.vectorResource(R.drawable.ic_linear_menu_dots)
+    /** The Edit playlist screen's drag handle. */
+    val Menu: ImageVector
+        @Composable get() = ImageVector.vectorResource(R.drawable.ic_outline_menu)
     val Bin: ImageVector
         @Composable get() = ImageVector.vectorResource(R.drawable.ic_linear_bin)
     val Pen: ImageVector

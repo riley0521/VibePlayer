@@ -8,19 +8,28 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.rfcoding.vibeplayer.core.designsystem.R
 import com.rfcoding.vibeplayer.core.designsystem.icons.VibeIcons
+
+private val DragHandleIconSize = 24.dp
+
+/** The handle is dragged, not tapped, so it gets the same touch target as the X beside it. */
+private val DragHandleTouchTargetSize = 48.dp
 
 /**
  * Figma "song-card". [duration] is already formatted by the caller (e.g. "3:45").
@@ -35,7 +44,9 @@ fun SongCard(
     modifier: Modifier = Modifier,
 ) {
     VibeListItemRow(onClick = onClick, modifier = modifier) {
-        SongCardContent(title = title, artistName = artistName, duration = duration, imageUri = imageUri)
+        SongCardContent(title = title, artistName = artistName, imageUri = imageUri) {
+            DurationText(duration = duration)
+        }
     }
 }
 
@@ -59,17 +70,57 @@ fun SelectableSongCard(
         modifier = modifier,
     ) {
         VibeCheckbox(checked = selected, onCheckedChange = null)
-        SongCardContent(title = title, artistName = artistName, duration = duration, imageUri = imageUri)
+        SongCardContent(title = title, artistName = artistName, imageUri = imageUri) {
+            DurationText(duration = duration)
+        }
     }
 }
 
-/** Artwork, titles and duration, shared so the plain and selectable cards can't drift apart. */
+/**
+ * Figma "song-card" as the Edit playlist screen shows it: the duration gives way to a drag handle,
+ * and an X in front removes the song. The row takes no click of its own.
+ *
+ * [dragHandleModifier] is where the caller's reorder gesture goes, so the reordering library stays
+ * out of the design system.
+ */
+@Composable
+fun EditableSongCard(
+    title: String,
+    artistName: String?,
+    imageUri: String?,
+    onRemoveClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    dragHandleModifier: Modifier = Modifier,
+) {
+    VibeListItemRow(modifier = modifier) {
+        VibeIconButton(
+            icon = VibeIcons.Close,
+            contentDescription = stringResource(R.string.remove_song, title),
+            onClick = onRemoveClick,
+        )
+        SongCardContent(title = title, artistName = artistName, imageUri = imageUri) {
+            Box(
+                modifier = dragHandleModifier.size(DragHandleTouchTargetSize),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = VibeIcons.Menu,
+                    contentDescription = stringResource(R.string.reorder_song, title),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(DragHandleIconSize),
+                )
+            }
+        }
+    }
+}
+
+/** Artwork and titles, shared so the three cards can't drift apart; [trailing] closes the row. */
 @Composable
 private fun RowScope.SongCardContent(
     title: String,
     artistName: String?,
-    duration: String,
     imageUri: String?,
+    trailing: @Composable () -> Unit,
 ) {
     SongArtwork(imageUri = imageUri, modifier = Modifier.size(64.dp))
     Column(
@@ -93,6 +144,11 @@ private fun RowScope.SongCardContent(
             )
         }
     }
+    trailing()
+}
+
+@Composable
+private fun DurationText(duration: String) {
     Text(
         text = duration,
         style = MaterialTheme.typography.bodyMedium,
@@ -169,6 +225,25 @@ private fun SelectableSongCardPreview() {
             imageUri = null,
             selected = false,
             onSelectedChange = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun EditableSongCardPreview() {
+    PreviewSurface {
+        EditableSongCard(
+            title = "Midnight Drive",
+            artistName = "The Night Owls",
+            imageUri = null,
+            onRemoveClick = {},
+        )
+        EditableSongCard(
+            title = "A song with a really long title that doesn't fit on one line",
+            artistName = null,
+            imageUri = null,
+            onRemoveClick = {},
         )
     }
 }

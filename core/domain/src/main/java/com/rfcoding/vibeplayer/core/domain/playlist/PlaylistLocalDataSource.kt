@@ -19,4 +19,10 @@ interface PlaylistLocalDataSource {
     /** Songs already in the playlist are left untouched. */
     suspend fun addSongsToPlaylist(playlistId: Long, songIds: List<String>): EmptyResult<DataError.Local>
     suspend fun removeSongsFromPlaylist(playlistId: Long, songIds: List<String>): EmptyResult<DataError.Local>
+
+    /**
+     * Leaves the playlist holding exactly [songIds], in that order: the songs left out are removed and
+     * the rest are reordered. Ids the playlist does not hold are ignored.
+     */
+    suspend fun setPlaylistSongs(playlistId: Long, songIds: List<String>): EmptyResult<DataError.Local>
 }

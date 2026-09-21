@@ -4,4 +4,6 @@
     <string name="clear_search">Clear search</string>
     <string name="navigate_back">Back</string>
     <string name="playlist_options">Playlist options</string>
+    <string name="remove_song">Remove %1$s</string>
+    <string name="reorder_song">Reorder %1$s</string>
 </resources>

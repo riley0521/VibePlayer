@@ -6,6 +6,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.toRoute
 import com.rfcoding.vibeplayer.feature.library.presentation.addsongs.AddSongsRoot
+import com.rfcoding.vibeplayer.feature.library.presentation.editplaylist.EditPlaylistRoot
 import com.rfcoding.vibeplayer.feature.library.presentation.library.LibraryRoot
 import com.rfcoding.vibeplayer.feature.library.presentation.playlistdetail.PlaylistDetailRoot
 import com.rfcoding.vibeplayer.feature.library.presentation.scan.ScanMusicRoot
@@ -27,14 +28,18 @@ data object SearchRoute
 @Serializable
 data class AddSongsRoute(val playlistId: Long)
 
+/** Reordering and removing a real playlist's songs; Favourites has no order to edit. */
+@Serializable
+data class EditPlaylistRoute(val playlistId: Long)
+
 /** The Playlist Page. A null [playlistId] is the virtual Favourites, which has no row id. */
 @Serializable
 data class PlaylistDetailRoute(val playlistId: Long? = null)
 
 /**
- * Library → Scan music, Search, Playlist Page and Add songs stay inside this feature, so the graph
- * navigates on its own. Opening the player (from the mini player or a search result) crosses into
- * another feature, so `:app` handles [onOpenPlayer].
+ * Library → Scan music, Search, Playlist Page, Add songs and Edit playlist all stay inside this
+ * feature, so the graph navigates on its own. Opening the player (from the mini player or a search
+ * result) crosses into another feature, so `:app` handles [onOpenPlayer].
  */
 fun NavGraphBuilder.libraryGraph(
     navController: NavController,
@@ -66,11 +71,18 @@ fun NavGraphBuilder.libraryGraph(
                 playlistId = backStackEntry.toRoute<PlaylistDetailRoute>().playlistId,
                 onNavigateBack = { navController.navigateUp() },
                 onAddSongsClick = { playlistId -> navController.navigate(AddSongsRoute(playlistId)) },
+                onEditPlaylistClick = { playlistId -> navController.navigate(EditPlaylistRoute(playlistId)) },
             )
         }
         composable<AddSongsRoute> { backStackEntry ->
             AddSongsRoot(
                 playlistId = backStackEntry.toRoute<AddSongsRoute>().playlistId,
+                onNavigateBack = { navController.navigateUp() },
+            )
+        }
+        composable<EditPlaylistRoute> { backStackEntry ->
+            EditPlaylistRoot(
+                playlistId = backStackEntry.toRoute<EditPlaylistRoute>().playlistId,
                 onNavigateBack = { navController.navigateUp() },
             )
         }

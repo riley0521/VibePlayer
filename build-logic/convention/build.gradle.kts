@@ -25,6 +25,10 @@ gradlePlugin {
             id = libs.plugins.vibeplayer.android.feature.get().pluginId
             implementationClass = "AndroidFeatureConventionPlugin"
         }
+        register("androidInstrumentedTesting") {
+            id = libs.plugins.vibeplayer.android.instrumented.testing.get().pluginId
+            implementationClass = "AndroidInstrumentedTestingConventionPlugin"
+        }
         register("domainModule") {
             id = libs.plugins.vibeplayer.domain.module.get().pluginId
             implementationClass = "DomainModuleConventionPlugin"

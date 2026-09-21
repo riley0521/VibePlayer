@@ -1,6 +1,7 @@
 package com.rfcoding.vibeplayer.feature.library.presentation.di
 
 import com.rfcoding.vibeplayer.feature.library.presentation.addsongs.AddSongsViewModel
+import com.rfcoding.vibeplayer.feature.library.presentation.editplaylist.EditPlaylistViewModel
 import com.rfcoding.vibeplayer.feature.library.presentation.library.LibraryViewModel
 import com.rfcoding.vibeplayer.feature.library.presentation.playlist.PlaylistViewModel
 import com.rfcoding.vibeplayer.feature.library.presentation.playlistdetail.PlaylistDetailViewModel
@@ -19,6 +20,7 @@ val libraryPresentationModule = module {
     viewModelOf(::SearchViewModel)
     // Its playlistId comes from parametersOf in AddSongsRoot.
     viewModelOf(::AddSongsViewModel)
+    viewModelOf(::EditPlaylistViewModel)
     // Its playlistId comes from parametersOf in PlaylistDetailRoot. It is null for Favourites, which
     // viewModelOf can't resolve, so the parameter is read explicitly.
     viewModel { params -> PlaylistDetailViewModel(params.getOrNull(), get(), get(), get()) }
