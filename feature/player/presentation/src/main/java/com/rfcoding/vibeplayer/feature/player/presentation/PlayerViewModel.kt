@@ -2,6 +2,7 @@ package com.rfcoding.vibeplayer.feature.player.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.rfcoding.vibeplayer.core.domain.image.ImageGallery
 import com.rfcoding.vibeplayer.core.domain.player.MusicPlayer
 import com.rfcoding.vibeplayer.core.domain.player.RepeatMode
 import com.rfcoding.vibeplayer.core.domain.playlist.PlaylistLocalDataSource
@@ -11,6 +12,7 @@ import com.rfcoding.vibeplayer.core.domain.util.onSuccess
 import com.rfcoding.vibeplayer.core.presentation.UiText
 import com.rfcoding.vibeplayer.core.presentation.toSongUi
 import com.rfcoding.vibeplayer.core.presentation.toUiText
+import com.rfcoding.vibeplayer.feature.player.presentation.sharecard.shareCardFileName
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,11 +28,13 @@ import kotlinx.coroutines.launch
  *
  * It also decides which sheet is open. The add-to-playlist sheet does its own writes; only a playlist
  * created from it gets its song added here, because the shared create sheet knows nothing about songs.
+ * The share card sheet captures itself as a PNG; saving those bytes to the gallery happens here.
  */
 class PlayerViewModel(
     private val musicPlayer: MusicPlayer,
     private val songDataSource: SongLocalDataSource,
     private val playlistDataSource: PlaylistLocalDataSource,
+    private val imageGallery: ImageGallery,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(PlayerState())
@@ -74,6 +78,13 @@ class PlayerViewModel(
                 openSheet(PlayerSheet.CreatePlaylist(sheet.songId))
             }
             is PlayerAction.OnPlaylistCreated -> addToCreatedPlaylist(action.playlistId, action.name)
+            PlayerAction.OnDownloadClick -> _state.value.song?.let { song ->
+                openSheet(PlayerSheet.ShareCard(song))
+            }
+            is PlayerAction.OnSaveCardClick -> saveCard(action.pngBytes)
+            PlayerAction.OnStoragePermissionDenied -> viewModelScope.launch {
+                eventChannel.send(PlayerEvent.Error(UiText.StringResource(R.string.storage_permission_denied)))
+            }
             PlayerAction.OnSheetDismiss -> closeSheet()
             // Handled by the Root.
             PlayerAction.OnBackClick -> Unit
@@ -91,6 +102,21 @@ class PlayerViewModel(
             playlistDataSource.addSongsToPlaylist(playlistId, listOf(songId))
                 .onSuccess { eventChannel.send(PlayerEvent.AddedToPlaylist(UiText.DynamicString(name))) }
                 .onFailure { error -> eventChannel.send(PlayerEvent.Error(error.toUiText())) }
+        }
+    }
+
+    private fun saveCard(pngBytes: ByteArray) {
+        val sheet = _state.value.activeSheet as? PlayerSheet.ShareCard ?: return
+        if (_state.value.isSavingCard) return
+        _state.update { it.copy(isSavingCard = true) }
+        viewModelScope.launch {
+            imageGallery.savePng(pngBytes, shareCardFileName(sheet.song.title, System.currentTimeMillis()))
+                .onSuccess {
+                    closeSheet()
+                    eventChannel.send(PlayerEvent.CardSaved)
+                }
+                .onFailure { error -> eventChannel.send(PlayerEvent.Error(error.toUiText())) }
+            _state.update { it.copy(isSavingCard = false) }
         }
     }
 

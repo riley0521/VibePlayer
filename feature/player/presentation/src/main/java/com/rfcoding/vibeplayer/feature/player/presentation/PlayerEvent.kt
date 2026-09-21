@@ -5,4 +5,5 @@ import com.rfcoding.vibeplayer.core.presentation.UiText
 sealed interface PlayerEvent {
     data class AddedToPlaylist(val playlistName: UiText) : PlayerEvent
     data class Error(val message: UiText) : PlayerEvent
+    data object CardSaved : PlayerEvent
 }

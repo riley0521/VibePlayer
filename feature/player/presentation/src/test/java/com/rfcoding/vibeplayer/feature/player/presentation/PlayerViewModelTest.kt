@@ -3,17 +3,22 @@ package com.rfcoding.vibeplayer.feature.player.presentation
 import app.cash.turbine.test
 import assertk.assertThat
 import assertk.assertions.containsExactly
+import assertk.assertions.endsWith
+import assertk.assertions.hasSize
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isInstanceOf
+import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
+import assertk.assertions.startsWith
 import com.rfcoding.vibeplayer.core.domain.player.PlaybackState
 import com.rfcoding.vibeplayer.core.domain.player.RepeatMode
 import com.rfcoding.vibeplayer.core.domain.util.DataError
 import com.rfcoding.vibeplayer.core.presentation.UiText
 import com.rfcoding.vibeplayer.core.presentation.toSongUi
+import com.rfcoding.vibeplayer.core.testing.FakeImageGallery
 import com.rfcoding.vibeplayer.core.testing.FakeMusicPlayer
 import com.rfcoding.vibeplayer.core.testing.FakePlaylistLocalDataSource
 import com.rfcoding.vibeplayer.core.testing.FakeSongLocalDataSource
@@ -34,6 +39,7 @@ class PlayerViewModelTest {
     private lateinit var musicPlayer: FakeMusicPlayer
     private lateinit var songDataSource: FakeSongLocalDataSource
     private lateinit var playlistDataSource: FakePlaylistLocalDataSource
+    private lateinit var imageGallery: FakeImageGallery
 
     private val songs = listOf(song("a"), song("b"), song("c"), song("d"))
 
@@ -44,6 +50,7 @@ class PlayerViewModelTest {
         songDataSource = FakeSongLocalDataSource()
         songDataSource.songsMutable.value = songs
         playlistDataSource = FakePlaylistLocalDataSource()
+        imageGallery = FakeImageGallery()
     }
 
     @AfterEach
@@ -51,7 +58,7 @@ class PlayerViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun createViewModel() = PlayerViewModel(musicPlayer, songDataSource, playlistDataSource)
+    private fun createViewModel() = PlayerViewModel(musicPlayer, songDataSource, playlistDataSource, imageGallery)
 
     private fun playSecondSong() {
         musicPlayer.playbackState.value = PlaybackState(queue = songs, currentIndex = 1)
@@ -256,6 +263,82 @@ class PlayerViewModelTest {
 
         viewModel.events.test {
             viewModel.onAction(PlayerAction.OnPlaylistCreated(playlistId = 7, name = "Road trip"))
+
+            assertThat(awaitItem()).isInstanceOf<PlayerEvent.Error>()
+        }
+    }
+
+    @Test
+    fun `download opens the share card for the current song`() = runTest {
+        val viewModel = createViewModel()
+        playSecondSong()
+
+        viewModel.onAction(PlayerAction.OnDownloadClick)
+
+        assertThat(viewModel.state.value.activeSheet).isEqualTo(PlayerSheet.ShareCard(songs[1].toSongUi()))
+    }
+
+    @Test
+    fun `download does nothing while nothing is queued`() = runTest {
+        val viewModel = createViewModel()
+
+        viewModel.onAction(PlayerAction.OnDownloadClick)
+
+        assertThat(viewModel.state.value.activeSheet).isNull()
+    }
+
+    @Test
+    fun `saving the card writes a png named after its song and closes the sheet`() = runTest {
+        val viewModel = createViewModel()
+        playSecondSong()
+        viewModel.onAction(PlayerAction.OnDownloadClick)
+        // The card keeps the song it opened for, even after the track changes.
+        musicPlayer.playbackState.value = PlaybackState(queue = songs, currentIndex = 2)
+
+        viewModel.events.test {
+            viewModel.onAction(PlayerAction.OnSaveCardClick(byteArrayOf(1, 2, 3)))
+
+            assertThat(awaitItem()).isEqualTo(PlayerEvent.CardSaved)
+        }
+        assertThat(imageGallery.savedNames).hasSize(1)
+        assertThat(imageGallery.savedNames.single()).startsWith("VibePlayer_Song b_")
+        assertThat(imageGallery.savedNames.single()).endsWith(".png")
+        assertThat(viewModel.state.value.activeSheet).isNull()
+        assertThat(viewModel.state.value.isSavingCard).isFalse()
+    }
+
+    @Test
+    fun `a failed save sends an error and keeps the sheet open`() = runTest {
+        imageGallery.error = DataError.Local.DISK_FULL
+        val viewModel = createViewModel()
+        playSecondSong()
+        viewModel.onAction(PlayerAction.OnDownloadClick)
+
+        viewModel.events.test {
+            viewModel.onAction(PlayerAction.OnSaveCardClick(byteArrayOf(1)))
+
+            assertThat(awaitItem()).isInstanceOf<PlayerEvent.Error>()
+        }
+        assertThat(viewModel.state.value.activeSheet).isNotNull().isInstanceOf<PlayerSheet.ShareCard>()
+        assertThat(viewModel.state.value.isSavingCard).isFalse()
+    }
+
+    @Test
+    fun `saving does nothing unless the share card is open`() = runTest {
+        val viewModel = createViewModel()
+        playSecondSong()
+
+        viewModel.onAction(PlayerAction.OnSaveCardClick(byteArrayOf(1)))
+
+        assertThat(imageGallery.savedNames).isEmpty()
+    }
+
+    @Test
+    fun `a denied storage permission sends an error`() = runTest {
+        val viewModel = createViewModel()
+
+        viewModel.events.test {
+            viewModel.onAction(PlayerAction.OnStoragePermissionDenied)
 
             assertThat(awaitItem()).isInstanceOf<PlayerEvent.Error>()
         }

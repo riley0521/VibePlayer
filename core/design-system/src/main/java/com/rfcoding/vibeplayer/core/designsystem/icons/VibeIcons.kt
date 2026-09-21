@@ -56,6 +56,8 @@ object VibeIcons {
         @Composable get() = ImageVector.vectorResource(R.drawable.ic_linear_pen)
     val ImageEdit: ImageVector
         @Composable get() = ImageVector.vectorResource(R.drawable.ic_linear_img_edit)
+    val Download: ImageVector
+        @Composable get() = ImageVector.vectorResource(R.drawable.ic_outline_download)
 
     val Music: ImageVector
         @Composable get() = ImageVector.vectorResource(R.drawable.ic_duotone_music)

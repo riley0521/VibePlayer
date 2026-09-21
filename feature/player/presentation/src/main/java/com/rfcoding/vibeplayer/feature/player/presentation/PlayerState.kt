@@ -13,6 +13,8 @@ data class PlayerState(
     val repeatMode: RepeatMode = RepeatMode.Off,
     /** At most one sheet is open at a time, so one slot beats a boolean per sheet. */
     val activeSheet: PlayerSheet? = null,
+    /** True while the share card is being written to the gallery; the Save button waits meanwhile. */
+    val isSavingCard: Boolean = false,
 )
 
 /**
@@ -27,4 +29,9 @@ sealed interface PlayerSheet {
 
     /** The shared create-playlist sheet; the new playlist gets [songId] once it is saved. */
     data class CreatePlaylist(override val songId: String) : PlayerSheet
+
+    /** The preview of the song's share card, which the user can save to the gallery as an image. */
+    data class ShareCard(val song: SongUi) : PlayerSheet {
+        override val songId: String get() = song.id
+    }
 }

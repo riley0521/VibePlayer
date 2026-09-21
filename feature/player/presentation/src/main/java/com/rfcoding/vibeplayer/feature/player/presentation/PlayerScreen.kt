@@ -39,6 +39,7 @@ import com.rfcoding.vibeplayer.core.presentation.playlistname.PlaylistNameMode
 import com.rfcoding.vibeplayer.core.presentation.playlistname.PlaylistNameSheetRoot
 import com.rfcoding.vibeplayer.core.presentation.toDurationText
 import com.rfcoding.vibeplayer.feature.player.presentation.addtoplaylist.AddToPlaylistSheetRoot
+import com.rfcoding.vibeplayer.feature.player.presentation.sharecard.ShareCardSheet
 import org.koin.androidx.compose.koinViewModel
 import com.rfcoding.vibeplayer.core.presentation.R as PresentationR
 
@@ -64,6 +65,9 @@ fun PlayerRoot(
             }
             is PlayerEvent.Error -> {
                 Toast.makeText(context, event.message.asString(context), Toast.LENGTH_LONG).show()
+            }
+            PlayerEvent.CardSaved -> {
+                Toast.makeText(context, R.string.card_saved, Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -103,6 +107,15 @@ fun PlayerRoot(
                 },
             )
         }
+    }
+
+    (state.activeSheet as? PlayerSheet.ShareCard)?.let { sheet ->
+        ShareCardSheet(
+            song = sheet.song,
+            isSaving = state.isSavingCard,
+            onAction = viewModel::onAction,
+            onDismiss = onSheetDismiss,
+        )
     }
 }
 
@@ -218,33 +231,53 @@ private fun TransportControls(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        VibeSeekBar(
-            progress = {
-                if (song.durationMillis > 0) {
-                    state.positionMillis.toFloat() / song.durationMillis
-                } else {
-                    0f
-                }
-            },
-            onSeek = { onAction(PlayerAction.OnSeek(it)) },
-            label = { fraction ->
-                val position = (song.durationMillis * fraction).toLong().toDurationText()
-                positionFormat.format(position, durationText)
-            },
-        )
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            VibeSeekBar(
+                progress = {
+                    if (song.durationMillis > 0) {
+                        state.positionMillis.toFloat() / song.durationMillis
+                    } else {
+                        0f
+                    }
+                },
+                onSeek = { onAction(PlayerAction.OnSeek(it)) },
+                label = { fraction ->
+                    val position = (song.durationMillis * fraction).toLong().toDurationText()
+                    positionFormat.format(position, durationText)
+                },
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(
+                    text = state.positionMillis.toDurationText(),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    text = durationText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colorScheme.onSurfaceVariant,
+                )
+            }
+        }
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            VibeIconButton(
-                icon = VibeIcons.Shuffle,
-                contentDescription = stringResource(R.string.shuffle),
-                onClick = { onAction(PlayerAction.OnShuffleClick) },
-                tint = if (state.isShuffleOn) colorScheme.primary else colorScheme.onSurfaceVariant,
-                iconSize = 20.dp,
-                containerColor = Color.Transparent,
-            )
+            // Both side groups share the leftover width equally, so Play stays centred even though
+            // the right side holds two buttons.
+            Row(modifier = Modifier.weight(1f)) {
+                VibeIconButton(
+                    icon = VibeIcons.Shuffle,
+                    contentDescription = stringResource(R.string.shuffle),
+                    onClick = { onAction(PlayerAction.OnShuffleClick) },
+                    tint = if (state.isShuffleOn) colorScheme.primary else colorScheme.onSurfaceVariant,
+                    iconSize = 20.dp,
+                    containerColor = Color.Transparent,
+                )
+            }
             Row(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -273,22 +306,35 @@ private fun TransportControls(
                     containerSize = 44.dp,
                 )
             }
-            VibeIconButton(
-                icon = when (state.repeatMode) {
-                    RepeatMode.Off -> VibeIcons.RepeatOff
-                    RepeatMode.All -> VibeIcons.Repeat
-                    RepeatMode.One -> VibeIcons.RepeatOne
-                },
-                contentDescription = stringResource(R.string.repeat),
-                onClick = { onAction(PlayerAction.OnRepeatClick) },
-                tint = if (state.repeatMode == RepeatMode.Off) {
-                    colorScheme.onSurfaceVariant
-                } else {
-                    colorScheme.primary
-                },
-                iconSize = 20.dp,
-                containerColor = Color.Transparent,
-            )
+            Row(
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.End,
+            ) {
+                VibeIconButton(
+                    icon = when (state.repeatMode) {
+                        RepeatMode.Off -> VibeIcons.RepeatOff
+                        RepeatMode.All -> VibeIcons.Repeat
+                        RepeatMode.One -> VibeIcons.RepeatOne
+                    },
+                    contentDescription = stringResource(R.string.repeat),
+                    onClick = { onAction(PlayerAction.OnRepeatClick) },
+                    tint = if (state.repeatMode == RepeatMode.Off) {
+                        colorScheme.onSurfaceVariant
+                    } else {
+                        colorScheme.primary
+                    },
+                    iconSize = 20.dp,
+                    containerColor = Color.Transparent,
+                )
+                VibeIconButton(
+                    icon = VibeIcons.Download,
+                    contentDescription = stringResource(R.string.download_card),
+                    onClick = { onAction(PlayerAction.OnDownloadClick) },
+                    tint = colorScheme.onSurfaceVariant,
+                    iconSize = 20.dp,
+                    containerColor = Color.Transparent,
+                )
+            }
         }
     }
 }
