@@ -56,12 +56,12 @@ class MusicManager(
         .flowOn(Dispatchers.Main.immediate)
         .stateIn(applicationScope, SharingStarted.WhileSubscribed(5_000), PlaybackState())
 
-    override suspend fun play(queue: List<Song>) = withController { controller ->
+    override suspend fun play(queue: List<Song>, isPlaylist: Boolean) = withController { controller ->
         if (queue.isEmpty()) return@withController
         controller.setMediaItems(queue.map { it.toMediaItem() })
         controller.prepare()
         controller.play()
-        sendQueueInfo(controller, originalOrder = queue.map { it.id })
+        sendQueueInfo(controller, originalOrder = queue.map { it.id }, isPlaylist = isPlaylist)
     }
 
     override suspend fun togglePlayPause() = withController { controller ->
@@ -108,10 +108,10 @@ class MusicManager(
         Unit
     }
 
-    private fun sendQueueInfo(controller: MediaController, originalOrder: List<String>) {
+    private fun sendQueueInfo(controller: MediaController, originalOrder: List<String>, isPlaylist: Boolean) {
         controller.sendCustomCommand(
             PlaybackSessionContract.SetQueueInfoCommand,
-            PlaybackSessionContract.queueInfoExtras(false, originalOrder),
+            PlaybackSessionContract.queueInfoExtras(isShuffleOn = false, originalOrder, isPlaylist),
         )
     }
 

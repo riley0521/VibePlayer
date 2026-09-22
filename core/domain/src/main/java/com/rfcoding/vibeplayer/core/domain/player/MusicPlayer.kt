@@ -14,9 +14,10 @@ interface MusicPlayer {
 
     /**
      * Replaces the current queue with [queue] and starts playing its first song. Shuffle is turned off
-     * and [queue]'s order becomes the original order.
+     * and [queue]'s order becomes the original order. [isPlaylist] marks a queue started from a playlist,
+     * whose artwork swipes wrap around whatever the repeat mode; see [PlaybackState.swipeNextIndex].
      */
-    suspend fun play(queue: List<Song>)
+    suspend fun play(queue: List<Song>, isPlaylist: Boolean = false)
 
     /** Pauses while playing; otherwise plays, restarting the current song if the queue has ended. */
     suspend fun togglePlayPause()

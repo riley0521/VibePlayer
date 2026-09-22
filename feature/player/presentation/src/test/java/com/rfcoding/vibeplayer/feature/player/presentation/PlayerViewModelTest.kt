@@ -107,10 +107,10 @@ class PlayerViewModelTest {
     }
 
     @Test
-    fun `state exposes the wrapped neighbours for the artwork pager`() = runTest {
+    fun `state exposes a playlist's wrapped neighbours for the artwork pager`() = runTest {
         val viewModel = createViewModel()
 
-        musicPlayer.playbackState.value = PlaybackState(queue = songs, currentIndex = 0)
+        musicPlayer.playbackState.value = PlaybackState(queue = songs, currentIndex = 0, isPlaylist = true)
 
         assertThat(viewModel.state.value.previousSong).isEqualTo(songs[3].toSongUi())
         assertThat(viewModel.state.value.nextSong).isEqualTo(songs[1].toSongUi())
@@ -130,9 +130,10 @@ class PlayerViewModelTest {
     }
 
     @Test
-    fun `swiping to next on the last song wraps to the first even without repeat`() = runTest {
+    fun `swiping to next on a playlist's last song wraps to the first even without repeat`() = runTest {
         val viewModel = createViewModel()
-        musicPlayer.playbackState.value = PlaybackState(queue = songs, currentIndex = 3, repeatMode = RepeatMode.Off)
+        musicPlayer.playbackState.value =
+            PlaybackState(queue = songs, currentIndex = 3, repeatMode = RepeatMode.Off, isPlaylist = true)
 
         viewModel.onAction(PlayerAction.OnArtworkSwipedToNext)
 
@@ -141,14 +142,27 @@ class PlayerViewModelTest {
     }
 
     @Test
-    fun `swiping to previous on the first song wraps to the last instead of restarting`() = runTest {
+    fun `swiping to previous on a playlist's first song wraps to the last instead of restarting`() = runTest {
         val viewModel = createViewModel()
-        musicPlayer.playbackState.value = PlaybackState(queue = songs, currentIndex = 0, repeatMode = RepeatMode.Off)
+        musicPlayer.playbackState.value =
+            PlaybackState(queue = songs, currentIndex = 0, repeatMode = RepeatMode.Off, isPlaylist = true)
 
         viewModel.onAction(PlayerAction.OnArtworkSwipedToPrevious)
 
         assertThat(musicPlayer.skippedToIndices).containsExactly(3)
         assertThat(musicPlayer.skipToPreviousCount).isEqualTo(0)
+    }
+
+    @Test
+    fun `swiping to previous on the first song of a non-playlist queue does nothing without repeat all`() = runTest {
+        val viewModel = createViewModel()
+        musicPlayer.playbackState.value = PlaybackState(queue = songs, currentIndex = 0, repeatMode = RepeatMode.Off)
+
+        viewModel.onAction(PlayerAction.OnArtworkSwipedToPrevious)
+
+        assertThat(viewModel.state.value.previousSong).isNull()
+        assertThat(musicPlayer.skipToPreviousCount).isEqualTo(0)
+        assertThat(musicPlayer.skippedToIndices).isEmpty()
     }
 
     @Test

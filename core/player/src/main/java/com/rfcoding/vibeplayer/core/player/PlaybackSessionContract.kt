@@ -5,7 +5,7 @@ import androidx.media3.session.SessionCommand
 
 /**
  * What [MusicManager], the media notification and [PlaybackService] agree on. State the player itself
- * can't hold (the shuffle flag and the original order) is kept in the session extras, so it lives as
+ * can't hold (the shuffle flag, the original order and whether the queue is a playlist) is kept in the session extras, so it lives as
  * long as the service.
  */
 internal object PlaybackSessionContract {
@@ -21,13 +21,18 @@ internal object PlaybackSessionContract {
 
     private const val KEY_IS_SHUFFLE_ON = "is_shuffle_on"
     private const val KEY_ORIGINAL_ORDER = "original_order"
+    private const val KEY_IS_PLAYLIST = "is_playlist"
 
-    fun queueInfoExtras(isShuffleOn: Boolean, originalOrder: List<String>): Bundle = Bundle().apply {
-        putBoolean(KEY_IS_SHUFFLE_ON, isShuffleOn)
-        putStringArrayList(KEY_ORIGINAL_ORDER, ArrayList(originalOrder))
-    }
+    fun queueInfoExtras(isShuffleOn: Boolean, originalOrder: List<String>, isPlaylist: Boolean): Bundle =
+        Bundle().apply {
+            putBoolean(KEY_IS_SHUFFLE_ON, isShuffleOn)
+            putStringArrayList(KEY_ORIGINAL_ORDER, ArrayList(originalOrder))
+            putBoolean(KEY_IS_PLAYLIST, isPlaylist)
+        }
 
     fun Bundle.isShuffleOn(): Boolean = getBoolean(KEY_IS_SHUFFLE_ON, false)
 
     fun Bundle.originalOrder(): List<String> = getStringArrayList(KEY_ORIGINAL_ORDER).orEmpty()
+
+    fun Bundle.isPlaylist(): Boolean = getBoolean(KEY_IS_PLAYLIST, false)
 }

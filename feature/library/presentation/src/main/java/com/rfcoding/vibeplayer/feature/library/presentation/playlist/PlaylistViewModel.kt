@@ -109,7 +109,8 @@ class PlaylistViewModel(
 
     private fun playQueue(queue: List<Song>) {
         if (queue.isEmpty()) return
-        viewModelScope.launch { musicPlayer.play(queue) }
+        // Playlist queues wrap around when the Player's artwork is swiped past an end.
+        viewModelScope.launch { musicPlayer.play(queue, isPlaylist = true) }
     }
 
     private fun runDatabaseUpdate(update: suspend () -> EmptyResult<DataError.Local>) {

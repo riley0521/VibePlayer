@@ -125,6 +125,7 @@ class PlaylistDetailViewModelTest {
         viewModel.onAction(PlaylistDetailAction.OnSongClick("c"))
 
         assertThat(musicPlayer.playedQueues).single().containsExactly(song("c"), song("d"))
+        assertThat(musicPlayer.playedAsPlaylist).containsExactly(true)
     }
 
     @Test
@@ -135,6 +136,7 @@ class PlaylistDetailViewModelTest {
         viewModel.onAction(PlaylistDetailAction.OnPlayClick)
 
         assertThat(musicPlayer.playedQueues).single().containsExactly(*songs.toTypedArray())
+        assertThat(musicPlayer.playedAsPlaylist).containsExactly(true)
     }
 
     @Test
@@ -145,6 +147,7 @@ class PlaylistDetailViewModelTest {
         viewModel.onAction(PlaylistDetailAction.OnShuffleClick)
 
         assertThat(musicPlayer.playedQueues).single().containsExactlyInAnyOrder(*songs.toTypedArray())
+        assertThat(musicPlayer.playedAsPlaylist).containsExactly(true)
     }
 
     @Test

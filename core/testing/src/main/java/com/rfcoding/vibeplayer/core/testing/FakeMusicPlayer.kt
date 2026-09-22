@@ -10,6 +10,8 @@ class FakeMusicPlayer : MusicPlayer {
     override val playbackState = MutableStateFlow(PlaybackState())
 
     val playedQueues = mutableListOf<List<Song>>()
+    /** The `isPlaylist` flag of each [play] call, in step with [playedQueues]. */
+    val playedAsPlaylist = mutableListOf<Boolean>()
     var togglePlayPauseCount = 0
     var skipToNextCount = 0
     var skipToPreviousCount = 0
@@ -18,8 +20,9 @@ class FakeMusicPlayer : MusicPlayer {
     val repeatModes = mutableListOf<RepeatMode>()
     val seekPositions = mutableListOf<Long>()
 
-    override suspend fun play(queue: List<Song>) {
+    override suspend fun play(queue: List<Song>, isPlaylist: Boolean) {
         playedQueues += queue
+        playedAsPlaylist += isPlaylist
     }
 
     override suspend fun togglePlayPause() {

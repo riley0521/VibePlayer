@@ -17,6 +17,8 @@ data class PlaybackState(
     val repeatMode: RepeatMode = RepeatMode.Off,
     /** Song ids in the order the queue was started, which turning shuffle off restores. */
     val originalOrder: List<String> = emptyList(),
+    /** True when the queue was started from a playlist, whose artwork swipes wrap around its ends. */
+    val isPlaylist: Boolean = false,
 ) {
     val currentSong: Song?
         get() = queue.getOrNull(currentIndex)
@@ -29,13 +31,14 @@ data class PlaybackState(
         get() = currentIndex in 0 until queue.lastIndex || isLooping
 
     /**
-     * The song a swipe of the artwork goes back to. Unlike [hasPrevious], swipes always wrap around, so
-     * the first song's previous is the last whatever the repeat mode. Null with fewer than two songs.
+     * The song a swipe of the artwork goes back to, or null when there is none. A playlist wraps around
+     * whatever the repeat mode, so its first song's previous is the last; any other queue follows
+     * [hasPrevious] and only wraps with [RepeatMode.All]. Null with fewer than two songs.
      */
     val swipePreviousIndex: Int?
         get() = swipeIndex(-1)
 
-    /** The song a swipe of the artwork goes on to; wraps from the last song to the first, see [swipePreviousIndex]. */
+    /** The song a swipe of the artwork goes on to; it wraps like [swipePreviousIndex] does. */
     val swipeNextIndex: Int?
         get() = swipeIndex(1)
 
@@ -45,8 +48,15 @@ data class PlaybackState(
     val swipeNextSong: Song?
         get() = swipeNextIndex?.let(queue::get)
 
-    private fun swipeIndex(step: Int): Int? =
-        if (queue.size < 2 || currentIndex !in queue.indices) null else (currentIndex + step).mod(queue.size)
+    private fun swipeIndex(step: Int): Int? {
+        if (queue.size < 2 || currentIndex !in queue.indices) return null
+        val target = currentIndex + step
+        return when {
+            target in queue.indices -> target
+            isPlaylist || isLooping -> target.mod(queue.size)
+            else -> null
+        }
+    }
 
     private val isLooping: Boolean
         get() = repeatMode == RepeatMode.All && queue.isNotEmpty()

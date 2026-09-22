@@ -157,7 +157,9 @@ class PlaybackService : MediaSessionService() {
         if (playback.currentSong == null) return
         val queue = if (playback.isShuffleOn) playback.originalOrderQueue() else playback.shuffledQueue()
         player.reorderQueue(queue)
-        setQueueInfo(PlaybackSessionContract.queueInfoExtras(!playback.isShuffleOn, playback.originalOrder))
+        setQueueInfo(
+            PlaybackSessionContract.queueInfoExtras(!playback.isShuffleOn, playback.originalOrder, playback.isPlaylist),
+        )
     }
 
     private fun MediaSession.toggleFavorite() {

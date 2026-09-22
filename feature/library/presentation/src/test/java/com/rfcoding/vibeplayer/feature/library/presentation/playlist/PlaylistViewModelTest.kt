@@ -139,6 +139,7 @@ class PlaylistViewModelTest {
         viewModel.onAction(PlaylistAction.OnPlayFavouritesClick)
 
         assertThat(musicPlayer.playedQueues).single().containsExactly(song("a", isFavorite = true), song("c", isFavorite = true))
+        assertThat(musicPlayer.playedAsPlaylist).containsExactly(true)
         assertThat(viewModel.state.value.activeSheet).isNull()
     }
 
@@ -150,6 +151,7 @@ class PlaylistViewModelTest {
         viewModel.onAction(PlaylistAction.OnPlayPlaylistClick(chill.id))
 
         assertThat(musicPlayer.playedQueues).single().containsExactly(song("b"), song("c"))
+        assertThat(musicPlayer.playedAsPlaylist).containsExactly(true)
         assertThat(viewModel.state.value.activeSheet).isNull()
     }
 

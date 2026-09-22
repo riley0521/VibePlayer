@@ -233,16 +233,18 @@ fun PlayerScreen(
     }
 }
 
-/** The pager's pages: the current song sits in the middle, with its neighbours to either side. */
-private data class ArtworkSlots(val previous: SongUi?, val current: SongUi, val next: SongUi?)
-
-private const val PreviousPage = 0
-private const val CurrentPage = 1
-private const val NextPage = 2
+/**
+ * The pager's songs: the current one with its neighbours to either side. A missing neighbour has no
+ * page, so the pager can't be swiped past that end of the queue.
+ */
+private data class ArtworkSlots(val previous: SongUi?, val current: SongUi, val next: SongUi?) {
+    val pages: List<SongUi> = listOfNotNull(previous, current, next)
+    val currentPage: Int = if (previous != null) 1 else 0
+}
 
 /**
- * The artwork, swipeable to the previous or next song. It always has three pages and returns to the
- * middle one whenever the song changes, so a swipe only asks for the skip; the session decides the rest.
+ * The artwork, swipeable to the previous or next song. It returns to the current song's page whenever
+ * the song changes, so a swipe only asks for the skip; the session decides the rest.
  */
 @Composable
 private fun ArtworkPager(
@@ -253,8 +255,8 @@ private fun ArtworkPager(
     onAction: (PlayerAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val pagerState = rememberPagerState(initialPage = CurrentPage) { 3 }
     var slots by remember { mutableStateOf(ArtworkSlots(previous, current, next)) }
+    val pagerState = rememberPagerState(initialPage = slots.currentPage) { slots.pages.size }
     // Set while this composable scrolls the pager itself, so only the user's swipes ask for a skip.
     var isSyncing by remember { mutableStateOf(false) }
     val currentOnAction by rememberUpdatedState(onAction)
@@ -263,9 +265,9 @@ private fun ArtworkPager(
         snapshotFlow { pagerState.settledPage }.collect { page ->
             // The settled page is re-read because this may run after a sync already moved the pager back.
             if (isSyncing || page != pagerState.settledPage) return@collect
-            when (page) {
-                NextPage -> currentOnAction(PlayerAction.OnArtworkSwipedToNext)
-                PreviousPage -> currentOnAction(PlayerAction.OnArtworkSwipedToPrevious)
+            when (page - slots.currentPage) {
+                1 -> currentOnAction(PlayerAction.OnArtworkSwipedToNext)
+                -1 -> currentOnAction(PlayerAction.OnArtworkSwipedToPrevious)
             }
         }
     }
@@ -279,12 +281,12 @@ private fun ArtworkPager(
             // After a swipe the pager already rests on that page, so this does nothing.
             when (current.id) {
                 slots.current.id -> Unit
-                slots.next?.id -> pagerState.animateScrollToPage(NextPage)
-                slots.previous?.id -> pagerState.animateScrollToPage(PreviousPage)
+                slots.next?.id -> pagerState.animateScrollToPage(slots.currentPage + 1)
+                slots.previous?.id -> pagerState.animateScrollToPage(slots.currentPage - 1)
             }
-            // Swapped together with the jump back to the middle, so both land in the same frame.
+            // Swapped together with the jump back to the current page, so both land in the same frame.
             slots = newSlots
-            pagerState.scrollToPage(CurrentPage)
+            pagerState.scrollToPage(newSlots.currentPage)
         } finally {
             isSyncing = false
         }
@@ -296,17 +298,11 @@ private fun ArtworkPager(
             .fillMaxWidth()
             .height(ArtworkSize),
         pageSpacing = pageSpacing,
-        userScrollEnabled = previous != null && next != null,
+        userScrollEnabled = slots.pages.size > 1,
     ) { page ->
-        val song = when (page) {
-            PreviousPage -> slots.previous
-            NextPage -> slots.next
-            else -> slots.current
-        }
+        val song = slots.pages.getOrNull(page) ?: return@HorizontalPager
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            if (song != null) {
-                SongArtwork(imageUri = song.imageUri, modifier = Modifier.size(ArtworkSize))
-            }
+            SongArtwork(imageUri = song.imageUri, modifier = Modifier.size(ArtworkSize))
         }
     }
 }

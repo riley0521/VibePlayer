@@ -71,6 +71,7 @@ class SongsViewModelTest {
         viewModel.onAction(SongsAction.OnSongClick("c"))
 
         assertThat(musicPlayer.playedQueues).single().containsExactly(song("c"), song("d"))
+        assertThat(musicPlayer.playedAsPlaylist).containsExactly(false)
     }
 
     @Test

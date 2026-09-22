@@ -5,6 +5,7 @@ import androidx.media3.common.Player
 import com.rfcoding.vibeplayer.core.domain.player.PlaybackState
 import com.rfcoding.vibeplayer.core.domain.player.RepeatMode
 import com.rfcoding.vibeplayer.core.domain.song.Song
+import com.rfcoding.vibeplayer.core.player.PlaybackSessionContract.isPlaylist
 import com.rfcoding.vibeplayer.core.player.PlaybackSessionContract.isShuffleOn
 import com.rfcoding.vibeplayer.core.player.PlaybackSessionContract.originalOrder
 
@@ -27,6 +28,7 @@ internal fun Player.toPlaybackState(queue: List<Song>, sessionExtras: Bundle): P
     isShuffleOn = sessionExtras.isShuffleOn(),
     repeatMode = repeatMode.toRepeatMode(),
     originalOrder = sessionExtras.originalOrder(),
+    isPlaylist = sessionExtras.isPlaylist(),
 )
 
 /** Gives the queue [queue]'s order without interrupting the current song, which [queue] must contain. */

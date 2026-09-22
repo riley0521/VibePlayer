@@ -23,8 +23,8 @@ class PlaybackStateTest {
         )
     }
 
-    private fun playback(currentIndex: Int, repeatMode: RepeatMode = RepeatMode.Off) =
-        PlaybackState(queue = songs, currentIndex = currentIndex, repeatMode = repeatMode)
+    private fun playback(currentIndex: Int, repeatMode: RepeatMode = RepeatMode.Off, isPlaylist: Boolean = false) =
+        PlaybackState(queue = songs, currentIndex = currentIndex, repeatMode = repeatMode, isPlaylist = isPlaylist)
 
     @Test
     fun `without repeat the first song has no previous and the last has no next`() {
@@ -62,23 +62,42 @@ class PlaybackStateTest {
 
     @Test
     fun `swipes from a middle song go to its neighbours`() {
-        assertThat(playback(1).swipePreviousIndex).isEqualTo(0)
-        assertThat(playback(1).swipeNextIndex).isEqualTo(2)
-        assertThat(playback(1).swipePreviousSong).isEqualTo(songs[0])
-        assertThat(playback(1).swipeNextSong).isEqualTo(songs[2])
-    }
-
-    @Test
-    fun `swipes wrap around at both ends whatever the repeat mode`() {
-        RepeatMode.entries.forEach { repeatMode ->
-            assertThat(playback(0, repeatMode).swipePreviousIndex).isEqualTo(2)
-            assertThat(playback(2, repeatMode).swipeNextIndex).isEqualTo(0)
+        listOf(false, true).forEach { isPlaylist ->
+            val state = playback(1, isPlaylist = isPlaylist)
+            assertThat(state.swipePreviousIndex).isEqualTo(0)
+            assertThat(state.swipeNextIndex).isEqualTo(2)
+            assertThat(state.swipePreviousSong).isEqualTo(songs[0])
+            assertThat(state.swipeNextSong).isEqualTo(songs[2])
         }
     }
 
     @Test
-    fun `with two songs both swipes go to the other song`() {
-        val state = PlaybackState(queue = songs.take(2), currentIndex = 0)
+    fun `a playlist's swipes wrap around at both ends whatever the repeat mode`() {
+        RepeatMode.entries.forEach { repeatMode ->
+            assertThat(playback(0, repeatMode, isPlaylist = true).swipePreviousIndex).isEqualTo(2)
+            assertThat(playback(2, repeatMode, isPlaylist = true).swipeNextIndex).isEqualTo(0)
+        }
+    }
+
+    @Test
+    fun `other queues can't be swiped past their ends without repeat all`() {
+        listOf(RepeatMode.Off, RepeatMode.One).forEach { repeatMode ->
+            assertThat(playback(0, repeatMode).swipePreviousIndex).isNull()
+            assertThat(playback(0, repeatMode).swipeNextIndex).isEqualTo(1)
+            assertThat(playback(2, repeatMode).swipePreviousIndex).isEqualTo(1)
+            assertThat(playback(2, repeatMode).swipeNextIndex).isNull()
+        }
+    }
+
+    @Test
+    fun `other queues wrap around with repeat all`() {
+        assertThat(playback(0, RepeatMode.All).swipePreviousIndex).isEqualTo(2)
+        assertThat(playback(2, RepeatMode.All).swipeNextIndex).isEqualTo(0)
+    }
+
+    @Test
+    fun `with two songs in a playlist both swipes go to the other song`() {
+        val state = PlaybackState(queue = songs.take(2), currentIndex = 0, isPlaylist = true)
 
         assertThat(state.swipePreviousIndex).isEqualTo(1)
         assertThat(state.swipeNextIndex).isEqualTo(1)
@@ -86,7 +105,7 @@ class PlaybackStateTest {
 
     @Test
     fun `nothing to swipe to with fewer than two songs`() {
-        val single = PlaybackState(queue = songs.take(1), currentIndex = 0, repeatMode = RepeatMode.All)
+        val single = PlaybackState(queue = songs.take(1), currentIndex = 0, repeatMode = RepeatMode.All, isPlaylist = true)
 
         assertThat(single.swipePreviousIndex).isNull()
         assertThat(single.swipeNextIndex).isNull()
