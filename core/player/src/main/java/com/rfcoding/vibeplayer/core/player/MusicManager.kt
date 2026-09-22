@@ -89,6 +89,12 @@ class MusicManager(
         }
     }
 
+    override suspend fun skipTo(index: Int) = withController { controller ->
+        if (index in 0 until controller.mediaItemCount) {
+            controller.seekToDefaultPosition(index)
+        }
+    }
+
     override suspend fun seekTo(positionMillis: Long) = withController { controller ->
         controller.seekTo(positionMillis)
     }

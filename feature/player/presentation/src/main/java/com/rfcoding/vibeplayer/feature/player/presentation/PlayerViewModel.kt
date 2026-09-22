@@ -49,6 +49,8 @@ class PlayerViewModel(
             _state.update {
                 it.copy(
                     song = currentSong?.toSongUi(),
+                    previousSong = playback.swipePreviousSong?.toSongUi(),
+                    nextSong = playback.swipeNextSong?.toSongUi(),
                     isPlaying = playback.isPlaying,
                     positionMillis = playback.positionMillis,
                     // The queue's copy of the song can be stale; the database row is the truth.
@@ -65,6 +67,8 @@ class PlayerViewModel(
             PlayerAction.OnPlayPauseClick -> viewModelScope.launch { musicPlayer.togglePlayPause() }
             PlayerAction.OnNextClick -> viewModelScope.launch { musicPlayer.skipToNext() }
             PlayerAction.OnPreviousClick -> viewModelScope.launch { musicPlayer.skipToPrevious() }
+            PlayerAction.OnArtworkSwipedToNext -> swipeToNext()
+            PlayerAction.OnArtworkSwipedToPrevious -> swipeToPrevious()
             PlayerAction.OnShuffleClick -> viewModelScope.launch { musicPlayer.toggleShuffle() }
             PlayerAction.OnRepeatClick -> viewModelScope.launch {
                 musicPlayer.setRepeatMode(musicPlayer.playbackState.value.repeatMode.next())
@@ -117,6 +121,24 @@ class PlayerViewModel(
                 }
                 .onFailure { error -> eventChannel.send(PlayerEvent.Error(error.toUiText())) }
             _state.update { it.copy(isSavingCard = false) }
+        }
+    }
+
+    /** Skips like the Next button, except that the last song wraps to the first whatever the repeat mode. */
+    private fun swipeToNext() {
+        val playback = musicPlayer.playbackState.value
+        val target = playback.swipeNextIndex ?: return
+        viewModelScope.launch {
+            if (target > playback.currentIndex) musicPlayer.skipToNext() else musicPlayer.skipTo(target)
+        }
+    }
+
+    /** Skips like the Previous button, except that the first song wraps to the last instead of restarting. */
+    private fun swipeToPrevious() {
+        val playback = musicPlayer.playbackState.value
+        val target = playback.swipePreviousIndex ?: return
+        viewModelScope.launch {
+            if (target < playback.currentIndex) musicPlayer.skipToPrevious() else musicPlayer.skipTo(target)
         }
     }
 

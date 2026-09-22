@@ -61,6 +61,40 @@ class PlaybackStateTest {
     }
 
     @Test
+    fun `swipes from a middle song go to its neighbours`() {
+        assertThat(playback(1).swipePreviousIndex).isEqualTo(0)
+        assertThat(playback(1).swipeNextIndex).isEqualTo(2)
+        assertThat(playback(1).swipePreviousSong).isEqualTo(songs[0])
+        assertThat(playback(1).swipeNextSong).isEqualTo(songs[2])
+    }
+
+    @Test
+    fun `swipes wrap around at both ends whatever the repeat mode`() {
+        RepeatMode.entries.forEach { repeatMode ->
+            assertThat(playback(0, repeatMode).swipePreviousIndex).isEqualTo(2)
+            assertThat(playback(2, repeatMode).swipeNextIndex).isEqualTo(0)
+        }
+    }
+
+    @Test
+    fun `with two songs both swipes go to the other song`() {
+        val state = PlaybackState(queue = songs.take(2), currentIndex = 0)
+
+        assertThat(state.swipePreviousIndex).isEqualTo(1)
+        assertThat(state.swipeNextIndex).isEqualTo(1)
+    }
+
+    @Test
+    fun `nothing to swipe to with fewer than two songs`() {
+        val single = PlaybackState(queue = songs.take(1), currentIndex = 0, repeatMode = RepeatMode.All)
+
+        assertThat(single.swipePreviousIndex).isNull()
+        assertThat(single.swipeNextIndex).isNull()
+        assertThat(PlaybackState().swipePreviousSong).isNull()
+        assertThat(PlaybackState().swipeNextSong).isNull()
+    }
+
+    @Test
     fun `the seek position is the fraction of the current song's duration`() {
         assertThat(playback(1).seekPositionFor(0f)).isEqualTo(0L)
         assertThat(playback(1).seekPositionFor(0.5f)).isEqualTo(30_000L)

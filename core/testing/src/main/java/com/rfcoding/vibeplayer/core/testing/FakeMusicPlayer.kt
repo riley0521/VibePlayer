@@ -13,6 +13,7 @@ class FakeMusicPlayer : MusicPlayer {
     var togglePlayPauseCount = 0
     var skipToNextCount = 0
     var skipToPreviousCount = 0
+    val skippedToIndices = mutableListOf<Int>()
     var toggleShuffleCount = 0
     val repeatModes = mutableListOf<RepeatMode>()
     val seekPositions = mutableListOf<Long>()
@@ -31,6 +32,10 @@ class FakeMusicPlayer : MusicPlayer {
 
     override suspend fun skipToPrevious() {
         skipToPreviousCount++
+    }
+
+    override suspend fun skipTo(index: Int) {
+        skippedToIndices += index
     }
 
     override suspend fun seekTo(positionMillis: Long) {

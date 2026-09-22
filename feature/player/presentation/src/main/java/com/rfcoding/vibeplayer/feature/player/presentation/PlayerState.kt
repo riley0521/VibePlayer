@@ -6,6 +6,9 @@ import com.rfcoding.vibeplayer.core.presentation.SongUi
 data class PlayerState(
     /** Null while nothing is queued, e.g. before the session connects. */
     val song: SongUi? = null,
+    /** The songs a swipe of the artwork goes to; they wrap around the queue. Null with fewer than two songs. */
+    val previousSong: SongUi? = null,
+    val nextSong: SongUi? = null,
     val isPlaying: Boolean = false,
     val positionMillis: Long = 0,
     val isFavorite: Boolean = false,

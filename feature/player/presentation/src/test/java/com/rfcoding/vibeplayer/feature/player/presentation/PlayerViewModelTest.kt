@@ -107,6 +107,66 @@ class PlayerViewModelTest {
     }
 
     @Test
+    fun `state exposes the wrapped neighbours for the artwork pager`() = runTest {
+        val viewModel = createViewModel()
+
+        musicPlayer.playbackState.value = PlaybackState(queue = songs, currentIndex = 0)
+
+        assertThat(viewModel.state.value.previousSong).isEqualTo(songs[3].toSongUi())
+        assertThat(viewModel.state.value.nextSong).isEqualTo(songs[1].toSongUi())
+    }
+
+    @Test
+    fun `swiping from a middle song skips like the buttons`() = runTest {
+        val viewModel = createViewModel()
+        playSecondSong()
+
+        viewModel.onAction(PlayerAction.OnArtworkSwipedToNext)
+        viewModel.onAction(PlayerAction.OnArtworkSwipedToPrevious)
+
+        assertThat(musicPlayer.skipToNextCount).isEqualTo(1)
+        assertThat(musicPlayer.skipToPreviousCount).isEqualTo(1)
+        assertThat(musicPlayer.skippedToIndices).isEmpty()
+    }
+
+    @Test
+    fun `swiping to next on the last song wraps to the first even without repeat`() = runTest {
+        val viewModel = createViewModel()
+        musicPlayer.playbackState.value = PlaybackState(queue = songs, currentIndex = 3, repeatMode = RepeatMode.Off)
+
+        viewModel.onAction(PlayerAction.OnArtworkSwipedToNext)
+
+        assertThat(musicPlayer.skippedToIndices).containsExactly(0)
+        assertThat(musicPlayer.skipToNextCount).isEqualTo(0)
+    }
+
+    @Test
+    fun `swiping to previous on the first song wraps to the last instead of restarting`() = runTest {
+        val viewModel = createViewModel()
+        musicPlayer.playbackState.value = PlaybackState(queue = songs, currentIndex = 0, repeatMode = RepeatMode.Off)
+
+        viewModel.onAction(PlayerAction.OnArtworkSwipedToPrevious)
+
+        assertThat(musicPlayer.skippedToIndices).containsExactly(3)
+        assertThat(musicPlayer.skipToPreviousCount).isEqualTo(0)
+    }
+
+    @Test
+    fun `swiping does nothing with a single song`() = runTest {
+        val viewModel = createViewModel()
+        musicPlayer.playbackState.value = PlaybackState(queue = songs.take(1), currentIndex = 0)
+
+        viewModel.onAction(PlayerAction.OnArtworkSwipedToNext)
+        viewModel.onAction(PlayerAction.OnArtworkSwipedToPrevious)
+
+        assertThat(viewModel.state.value.previousSong).isNull()
+        assertThat(viewModel.state.value.nextSong).isNull()
+        assertThat(musicPlayer.skipToNextCount).isEqualTo(0)
+        assertThat(musicPlayer.skipToPreviousCount).isEqualTo(0)
+        assertThat(musicPlayer.skippedToIndices).isEmpty()
+    }
+
+    @Test
     fun `shuffle click toggles shuffle in the player`() = runTest {
         val viewModel = createViewModel()
 

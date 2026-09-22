@@ -28,6 +28,26 @@ data class PlaybackState(
     val hasNext: Boolean
         get() = currentIndex in 0 until queue.lastIndex || isLooping
 
+    /**
+     * The song a swipe of the artwork goes back to. Unlike [hasPrevious], swipes always wrap around, so
+     * the first song's previous is the last whatever the repeat mode. Null with fewer than two songs.
+     */
+    val swipePreviousIndex: Int?
+        get() = swipeIndex(-1)
+
+    /** The song a swipe of the artwork goes on to; wraps from the last song to the first, see [swipePreviousIndex]. */
+    val swipeNextIndex: Int?
+        get() = swipeIndex(1)
+
+    val swipePreviousSong: Song?
+        get() = swipePreviousIndex?.let(queue::get)
+
+    val swipeNextSong: Song?
+        get() = swipeNextIndex?.let(queue::get)
+
+    private fun swipeIndex(step: Int): Int? =
+        if (queue.size < 2 || currentIndex !in queue.indices) null else (currentIndex + step).mod(queue.size)
+
     private val isLooping: Boolean
         get() = repeatMode == RepeatMode.All && queue.isNotEmpty()
 

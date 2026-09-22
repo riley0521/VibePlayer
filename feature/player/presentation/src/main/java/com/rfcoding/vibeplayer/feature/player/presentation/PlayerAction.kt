@@ -9,6 +9,9 @@ sealed interface PlayerAction {
     data object OnPreviousClick : PlayerAction
     data object OnPlayPauseClick : PlayerAction
     data object OnNextClick : PlayerAction
+    /** The artwork was swiped to the next or previous song; unlike the buttons, this wraps around the queue. */
+    data object OnArtworkSwipedToNext : PlayerAction
+    data object OnArtworkSwipedToPrevious : PlayerAction
     data class OnSeek(val fraction: Float) : PlayerAction
     data object OnSheetDismiss : PlayerAction
     /** The Create Playlist row of the add-to-playlist sheet. */

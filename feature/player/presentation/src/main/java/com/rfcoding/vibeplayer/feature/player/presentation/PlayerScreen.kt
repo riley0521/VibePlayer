@@ -2,19 +2,29 @@ package com.rfcoding.vibeplayer.feature.player.presentation
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -22,6 +32,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rfcoding.vibeplayer.core.designsystem.components.SongArtwork
@@ -174,7 +185,13 @@ fun PlayerScreen(
                 verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterVertically),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                SongArtwork(imageUri = song.imageUri, modifier = Modifier.size(ArtworkSize))
+                ArtworkPager(
+                    previous = state.previousSong,
+                    current = song,
+                    next = state.nextSong,
+                    pageSpacing = horizontalPadding,
+                    onAction = onAction,
+                )
                 Column(
                     modifier = Modifier
                         .widthIn(max = TextBlockMaxWidth)
@@ -212,6 +229,84 @@ fun PlayerScreen(
                     .padding(horizontal = horizontalPadding)
                     .padding(bottom = 16.dp),
             )
+        }
+    }
+}
+
+/** The pager's pages: the current song sits in the middle, with its neighbours to either side. */
+private data class ArtworkSlots(val previous: SongUi?, val current: SongUi, val next: SongUi?)
+
+private const val PreviousPage = 0
+private const val CurrentPage = 1
+private const val NextPage = 2
+
+/**
+ * The artwork, swipeable to the previous or next song. It always has three pages and returns to the
+ * middle one whenever the song changes, so a swipe only asks for the skip; the session decides the rest.
+ */
+@Composable
+private fun ArtworkPager(
+    previous: SongUi?,
+    current: SongUi,
+    next: SongUi?,
+    pageSpacing: Dp,
+    onAction: (PlayerAction) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val pagerState = rememberPagerState(initialPage = CurrentPage) { 3 }
+    var slots by remember { mutableStateOf(ArtworkSlots(previous, current, next)) }
+    // Set while this composable scrolls the pager itself, so only the user's swipes ask for a skip.
+    var isSyncing by remember { mutableStateOf(false) }
+    val currentOnAction by rememberUpdatedState(onAction)
+
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.settledPage }.collect { page ->
+            // The settled page is re-read because this may run after a sync already moved the pager back.
+            if (isSyncing || page != pagerState.settledPage) return@collect
+            when (page) {
+                NextPage -> currentOnAction(PlayerAction.OnArtworkSwipedToNext)
+                PreviousPage -> currentOnAction(PlayerAction.OnArtworkSwipedToPrevious)
+            }
+        }
+    }
+
+    LaunchedEffect(previous, current, next) {
+        val newSlots = ArtworkSlots(previous, current, next)
+        if (newSlots == slots) return@LaunchedEffect
+        isSyncing = true
+        try {
+            // A skip from the buttons, the notification or auto-advance slides like a swipe would.
+            // After a swipe the pager already rests on that page, so this does nothing.
+            when (current.id) {
+                slots.current.id -> Unit
+                slots.next?.id -> pagerState.animateScrollToPage(NextPage)
+                slots.previous?.id -> pagerState.animateScrollToPage(PreviousPage)
+            }
+            // Swapped together with the jump back to the middle, so both land in the same frame.
+            slots = newSlots
+            pagerState.scrollToPage(CurrentPage)
+        } finally {
+            isSyncing = false
+        }
+    }
+
+    HorizontalPager(
+        state = pagerState,
+        modifier = modifier
+            .fillMaxWidth()
+            .height(ArtworkSize),
+        pageSpacing = pageSpacing,
+        userScrollEnabled = previous != null && next != null,
+    ) { page ->
+        val song = when (page) {
+            PreviousPage -> slots.previous
+            NextPage -> slots.next
+            else -> slots.current
+        }
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            if (song != null) {
+                SongArtwork(imageUri = song.imageUri, modifier = Modifier.size(ArtworkSize))
+            }
         }
     }
 }
@@ -347,6 +442,9 @@ private val PreviewSong = SongUi(
     durationMillis = 254_000,
 )
 
+private val PreviewPreviousSong = PreviewSong.copy(id = "do-i-wanna-know.mp3", title = "Do I Wanna Know?")
+private val PreviewNextSong = PreviewSong.copy(id = "r-u-mine.mp3", title = "R U Mine?")
+
 @Preview(name = "Mobile", widthDp = 412, heightDp = 917)
 @Preview(name = "Tablet", widthDp = 840, heightDp = 917)
 @Composable
@@ -355,6 +453,8 @@ private fun PlayerScreenPausedPreview() {
         PlayerScreen(
             state = PlayerState(
                 song = PreviewSong,
+                previousSong = PreviewPreviousSong,
+                nextSong = PreviewNextSong,
                 repeatMode = RepeatMode.Off,
                 isShuffleOn = false
             ),
@@ -371,6 +471,8 @@ private fun PlayerScreenPlayingPreview() {
         PlayerScreen(
             state = PlayerState(
                 song = PreviewSong,
+                previousSong = PreviewPreviousSong,
+                nextSong = PreviewNextSong,
                 isPlaying = true,
                 positionMillis = 127_000,
                 isFavorite = true,

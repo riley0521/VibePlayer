@@ -26,6 +26,9 @@ interface MusicPlayer {
     /** Goes to the previous song, or restarts the current one when it is the first. */
     suspend fun skipToPrevious()
 
+    /** Jumps to the start of the song at [index] in [PlaybackState.queue], keeping play/pause as it is. */
+    suspend fun skipTo(index: Int)
+
     /** Moves the current song to [positionMillis]; see [PlaybackState.seekPositionFor]. */
     suspend fun seekTo(positionMillis: Long)
 

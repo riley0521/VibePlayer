@@ -93,10 +93,18 @@ class AddSongsViewModel(
         if (current.isSaving || !current.hasSelection) return
 
         // Library order, and only songs that still exist after a rescan.
-        val songIds = allSongs.filter { it.id in current.selectedSongIds }.map { it.id }
+        val currentSelectedIds = current.selectedSongIds
+        val songIds = allSongs.filter { it.id in currentSelectedIds }.map { it.id }
+
+        // songIds above is not in the order it was selected anymore, so we have an equality check here.
+        val songIdsSortedBySelection = if (currentSelectedIds == songIds.toSet()) {
+            currentSelectedIds.toList()
+        } else {
+            songIds
+        }
         _state.update { it.copy(isSaving = true) }
         viewModelScope.launch {
-            playlistDataSource.addSongsToPlaylist(playlistId, songIds)
+            playlistDataSource.addSongsToPlaylist(playlistId, songIdsSortedBySelection)
                 .onSuccess { eventChannel.send(AddSongsEvent.SongsAdded) }
                 .onFailure { error -> eventChannel.send(AddSongsEvent.Error(error.toUiText())) }
             _state.update { it.copy(isSaving = false) }
