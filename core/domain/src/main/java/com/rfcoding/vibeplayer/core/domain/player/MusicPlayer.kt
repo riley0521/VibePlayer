@@ -40,4 +40,16 @@ interface MusicPlayer {
      * interrupting the current song. See [shuffledQueue] and [originalOrderQueue].
      */
     suspend fun toggleShuffle()
+
+    /**
+     * Moves the upcoming song at [from] to [to], both indices in [PlaybackState.queue]. Neither may be
+     * the current song or one already played; such a move is ignored. See [originalOrderAfterMove].
+     */
+    suspend fun moveQueueItem(from: Int, to: Int)
+
+    /** Removes the upcoming song at [index] in [PlaybackState.queue]; the current song can't be removed. */
+    suspend fun removeQueueItem(index: Int)
+
+    /** Pauses and stops the playback service when [timer] is due, replacing any timer already set. */
+    suspend fun setSleepTimer(timer: SleepTimer)
 }

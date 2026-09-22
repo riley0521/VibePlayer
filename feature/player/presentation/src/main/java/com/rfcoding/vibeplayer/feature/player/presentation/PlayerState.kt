@@ -21,20 +21,20 @@ data class PlayerState(
 )
 
 /**
- * The bottom sheets the Player screen can put over itself. Each keeps the id of the song that was
- * playing when it opened, so that song is the one added even if the track changes meanwhile.
+ * The bottom sheets the Player screen can put over itself. The song sheets keep the id of the song
+ * that was playing when they opened, so that song is the one added even if the track changes meanwhile.
  */
 sealed interface PlayerSheet {
-    val songId: String
 
     /** Figma "Now Playing - Add to Playlist". It keeps its own state in `AddToPlaylistViewModel`. */
-    data class AddToPlaylist(override val songId: String) : PlayerSheet
+    data class AddToPlaylist(val songId: String) : PlayerSheet
 
     /** The shared create-playlist sheet; the new playlist gets [songId] once it is saved. */
-    data class CreatePlaylist(override val songId: String) : PlayerSheet
+    data class CreatePlaylist(val songId: String) : PlayerSheet
 
     /** The preview of the song's share card, which the user can save to the gallery as an image. */
-    data class ShareCard(val song: SongUi) : PlayerSheet {
-        override val songId: String get() = song.id
-    }
+    data class ShareCard(val song: SongUi) : PlayerSheet
+
+    /** The current and upcoming songs. It keeps its own state in `QueueViewModel`. */
+    data object Queue : PlayerSheet
 }

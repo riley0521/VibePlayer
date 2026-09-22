@@ -6,9 +6,22 @@
     <string name="shuffle">Shuffle</string>
     <string name="repeat">Repeat</string>
     <string name="previous_song">Previous song</string>
+    <string name="queue">Queue</string>
+
+    <string name="no_upcoming_songs">No upcoming songs</string>
+    <string name="remove_from_queue">Remove from queue</string>
+    <string name="sleep_timer">Sleep timer</string>
+    <plurals name="sleep_timer_minutes">
+        <item quantity="one">%d minute</item>
+        <item quantity="other">%d minutes</item>
+    </plurals>
+    <string name="sleep_timer_hour">1 hour</string>
+    <string name="sleep_timer_end_of_track">End of track</string>
 
     <string name="create_playlist">Create Playlist</string>
     <string name="added_to_playlist">Added to %s</string>
+    <string name="in_playlist">In playlist</string>
+    <string name="not_in_playlist">Not in playlist</string>
 
     <string name="download_card">Save as image</string>
     <string name="share_card_title">Save as image</string>

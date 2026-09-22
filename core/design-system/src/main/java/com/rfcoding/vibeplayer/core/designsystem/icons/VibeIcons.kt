@@ -42,9 +42,15 @@ object VibeIcons {
         @Composable get() = ImageVector.vectorResource(R.drawable.ic_linear_repeat_off)
     val Shuffle: ImageVector
         @Composable get() = ImageVector.vectorResource(R.drawable.ic_linear_shuffle)
+    val Queue: ImageVector
+        @Composable get() = ImageVector.vectorResource(R.drawable.ic_linear_queue)
+    val Timer: ImageVector
+        @Composable get() = ImageVector.vectorResource(R.drawable.ic_linear_timer)
 
     val Plus: ImageVector
         @Composable get() = ImageVector.vectorResource(R.drawable.ic_linear_plus)
+    val Check: ImageVector
+        @Composable get() = ImageVector.vectorResource(R.drawable.ic_linear_check)
     val MenuDots: ImageVector
         @Composable get() = ImageVector.vectorResource(R.drawable.ic_linear_menu_dots)
     /** The Edit playlist screen's drag handle. */

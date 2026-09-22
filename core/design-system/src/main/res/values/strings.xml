@@ -6,4 +6,6 @@
     <string name="playlist_options">Playlist options</string>
     <string name="remove_song">Remove %1$s</string>
     <string name="reorder_song">Reorder %1$s</string>
+    <string name="play_song">Play %1$s</string>
+    <string name="pause_song">Pause %1$s</string>
 </resources>

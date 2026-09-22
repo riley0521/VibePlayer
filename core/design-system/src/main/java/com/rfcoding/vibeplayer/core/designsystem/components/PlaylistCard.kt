@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,6 +34,7 @@ sealed interface PlaylistArtwork {
 /**
  * Figma "playlist-card". [subtitle] is already formatted by the caller (e.g. "12 songs").
  * Passing [onMenuClick] adds the trailing options button; the "create playlist" row leaves it out.
+ * [trailingContent] is drawn in the same place, for a trailing icon that isn't a button of its own.
  * A null [onClick] leaves the card inert, which is how the action sheet reuses it as a header.
  */
 @Composable
@@ -43,6 +45,7 @@ fun PlaylistCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
     onMenuClick: (() -> Unit)? = null,
+    trailingContent: (@Composable () -> Unit)? = null,
 ) {
     VibeListItemRow(onClick = onClick, modifier = modifier) {
         PlaylistArtworkImage(
@@ -81,6 +84,7 @@ fun PlaylistCard(
                 containerColor = Color.Transparent,
             )
         }
+        trailingContent?.invoke()
     }
 }
 
@@ -145,5 +149,18 @@ private fun PlaylistCardPreview() {
             onMenuClick = {},
         )
         PlaylistCard(title = "Create playlist", subtitle = null, artwork = PlaylistArtwork.Create, onClick = {})
+        PlaylistCard(
+            title = "Friday Chill",
+            subtitle = "3 songs",
+            artwork = PlaylistArtwork.Default,
+            onClick = {},
+            trailingContent = {
+                Icon(
+                    imageVector = VibeIcons.Check,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+            },
+        )
     }
 }

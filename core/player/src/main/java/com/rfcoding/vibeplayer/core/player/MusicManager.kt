@@ -10,6 +10,7 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.rfcoding.vibeplayer.core.domain.player.MusicPlayer
 import com.rfcoding.vibeplayer.core.domain.player.PlaybackState
 import com.rfcoding.vibeplayer.core.domain.player.RepeatMode
+import com.rfcoding.vibeplayer.core.domain.player.SleepTimer
 import com.rfcoding.vibeplayer.core.domain.song.Song
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -105,6 +106,30 @@ class MusicManager(
 
     override suspend fun toggleShuffle() = withController { controller ->
         controller.sendCustomCommand(PlaybackSessionContract.ToggleShuffleCommand, Bundle.EMPTY)
+        Unit
+    }
+
+    override suspend fun moveQueueItem(from: Int, to: Int) = withController { controller ->
+        controller.sendCustomCommand(
+            PlaybackSessionContract.MoveQueueItemCommand,
+            PlaybackSessionContract.moveArgs(from, to),
+        )
+        Unit
+    }
+
+    override suspend fun removeQueueItem(index: Int) = withController { controller ->
+        controller.sendCustomCommand(
+            PlaybackSessionContract.RemoveQueueItemCommand,
+            PlaybackSessionContract.removeArgs(index),
+        )
+        Unit
+    }
+
+    override suspend fun setSleepTimer(timer: SleepTimer) = withController { controller ->
+        controller.sendCustomCommand(
+            PlaybackSessionContract.SetSleepTimerCommand,
+            PlaybackSessionContract.sleepTimerArgs(timer),
+        )
         Unit
     }
 

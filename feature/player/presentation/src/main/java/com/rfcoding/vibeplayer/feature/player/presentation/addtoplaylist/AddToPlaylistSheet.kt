@@ -6,11 +6,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
@@ -20,19 +21,19 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rfcoding.vibeplayer.core.designsystem.components.PlaylistArtwork
 import com.rfcoding.vibeplayer.core.designsystem.components.PlaylistCard
+import com.rfcoding.vibeplayer.core.designsystem.icons.VibeIcons
 import com.rfcoding.vibeplayer.core.presentation.ObserveAsEvents
 import com.rfcoding.vibeplayer.core.presentation.PlaylistUi
 import com.rfcoding.vibeplayer.core.presentation.SheetPreviewSurface
 import com.rfcoding.vibeplayer.core.presentation.VibeBottomSheet
 import com.rfcoding.vibeplayer.feature.player.presentation.R
-import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 import com.rfcoding.vibeplayer.core.presentation.R as PresentationR
 
 /**
  * Hosts [AddToPlaylistViewModel]; call it inside `DialogSheetScopedViewModel` so each opening of the
- * sheet gets a fresh ViewModel for [songId]. Once the song is added it shows a toast and closes.
+ * sheet gets a fresh ViewModel for [songId]. The sheet stays open while the user toggles playlists.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,19 +45,10 @@ fun AddToPlaylistSheetRoot(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState()
 
     ObserveAsEvents(viewModel.events) { event ->
         when (event) {
-            is AddToPlaylistEvent.AddedToPlaylist -> {
-                val message = context.getString(R.string.added_to_playlist, event.playlistName.asString(context))
-                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-                scope.launch {
-                    sheetState.hide()
-                    onDismiss()
-                }
-            }
             is AddToPlaylistEvent.Error -> {
                 Toast.makeText(context, event.message.asString(context), Toast.LENGTH_LONG).show()
             }
@@ -77,8 +69,9 @@ fun AddToPlaylistSheetRoot(
 }
 
 /**
- * Figma "Now Playing - Add to Playlist": no title and no handle, just the Create Playlist row, the
- * virtual Favourites and the user's playlists as playlist cards without their options button.
+ * Figma "Now Playing - Add to Playlist": no title, just the Create Playlist row, the virtual
+ * Favourites and the user's playlists as playlist cards without their options button. Each playlist
+ * row ends with a check when it already holds the song and a plus when it doesn't.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -127,6 +120,7 @@ internal fun AddToPlaylistSheetContent(
                 ),
                 artwork = PlaylistArtwork.Favourites,
                 onClick = { onAction(AddToPlaylistAction.OnFavouritesClick) },
+                trailingContent = { PlaylistMembershipIcon(isInPlaylist = state.isFavourite) },
             )
         }
         items(items = state.playlists, key = { it.id }) { playlist ->
@@ -139,8 +133,28 @@ internal fun AddToPlaylistSheetContent(
                 ),
                 artwork = playlist.imageUri?.let(PlaylistArtwork::Image) ?: PlaylistArtwork.Default,
                 onClick = { onAction(AddToPlaylistAction.OnPlaylistClick(playlist.id)) },
+                trailingContent = {
+                    PlaylistMembershipIcon(isInPlaylist = playlist.id in state.playlistIdsWithSong)
+                },
             )
         }
+    }
+}
+
+@Composable
+private fun PlaylistMembershipIcon(isInPlaylist: Boolean) {
+    if (isInPlaylist) {
+        Icon(
+            imageVector = VibeIcons.Check,
+            contentDescription = stringResource(R.string.in_playlist),
+            tint = MaterialTheme.colorScheme.primary,
+        )
+    } else {
+        Icon(
+            imageVector = VibeIcons.Plus,
+            contentDescription = stringResource(R.string.not_in_playlist),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
@@ -154,6 +168,8 @@ private fun AddToPlaylistSheetPreview() {
         AddToPlaylistSheetContent(
             state = AddToPlaylistState(
                 favouriteSongCount = 2,
+                isFavourite = true,
+                playlistIdsWithSong = setOf(2),
                 playlists = listOf(
                     PlaylistUi(id = 1, name = "Friday Chill", songCount = 2, imageUri = null),
                     PlaylistUi(id = 2, name = "Hypin' myself up for cleaning", songCount = 2, imageUri = null),

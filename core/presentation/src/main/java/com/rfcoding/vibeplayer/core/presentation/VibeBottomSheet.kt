@@ -1,6 +1,11 @@
 package com.rfcoding.vibeplayer.core.presentation
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -9,6 +14,7 @@ import androidx.compose.material3.SheetState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -43,8 +49,20 @@ fun VibeBottomSheet(
         shape = VibeBottomSheetShape,
         containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
         scrimColor = MaterialTheme.colorScheme.scrim,
-        // Figma draws no drag handle.
-        dragHandle = null,
+        // Figma draws no drag handle, so every sheet shares this one instead of Material's.
+        dragHandle = { VibeSheetDragHandle() },
         content = content,
+    )
+}
+
+/** A 32x4dp pill; ModalBottomSheet centers it and makes it draggable. */
+@Composable
+private fun VibeSheetDragHandle(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .padding(top = 12.dp, bottom = 8.dp)
+            .size(width = 32.dp, height = 4.dp)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.outline),
     )
 }

@@ -49,7 +49,7 @@ internal fun PermissionRationaleSheetContent(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 48.dp),
+            .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 48.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {

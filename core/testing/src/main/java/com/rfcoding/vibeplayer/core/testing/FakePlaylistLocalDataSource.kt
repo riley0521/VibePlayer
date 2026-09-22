@@ -16,7 +16,10 @@ class FakePlaylistLocalDataSource : PlaylistLocalDataSource {
     /** When set, every write fails with it and leaves [playlists] untouched. */
     var error: DataError.Local? = null
 
-    /** Song ids passed to [addSongsToPlaylist], by playlist; the fake has no songs to attach them to. */
+    /**
+     * Song ids passed to [addSongsToPlaylist], by playlist. The playlist also gains a `song(id)` for
+     * every id it doesn't hold yet, so membership can be observed.
+     */
     val addedSongIds = mutableMapOf<Long, List<String>>()
 
     /** Song ids passed to [setPlaylistSongs], by playlist, so tests can assert the saved order. */
@@ -52,7 +55,10 @@ class FakePlaylistLocalDataSource : PlaylistLocalDataSource {
     override suspend fun addSongsToPlaylist(playlistId: Long, songIds: List<String>): EmptyResult<DataError.Local> {
         error?.let { return Result.Error(it) }
         addedSongIds[playlistId] = addedSongIds[playlistId].orEmpty() + songIds
-        return Result.Success(Unit)
+        return update(playlistId) { playlist ->
+            val heldIds = playlist.songs.map { it.id }.toSet()
+            playlist.copy(songs = playlist.songs + songIds.filterNot { it in heldIds }.map { song(it) })
+        }
     }
 
     override suspend fun removeSongsFromPlaylist(

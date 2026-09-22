@@ -99,22 +99,72 @@ fun EditableSongCard(
             onClick = onRemoveClick,
         )
         SongCardContent(title = title, artistName = artistName, imageUri = imageUri) {
-            Box(
-                modifier = dragHandleModifier.size(DragHandleTouchTargetSize),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = VibeIcons.Menu,
-                    contentDescription = stringResource(R.string.reorder_song, title),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(DragHandleIconSize),
-                )
-            }
+            DragHandle(title = title, modifier = dragHandleModifier)
         }
     }
 }
 
-/** Artwork and titles, shared so the three cards can't drift apart; [trailing] closes the row. */
+/**
+ * The Queue sheet's first row: the song playing now, closed by a play/pause button instead of the
+ * duration. The row takes no click of its own.
+ */
+@Composable
+fun NowPlayingSongCard(
+    title: String,
+    artistName: String?,
+    imageUri: String?,
+    isPlaying: Boolean,
+    onPlayPauseClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    VibeListItemRow(modifier = modifier) {
+        SongCardContent(title = title, artistName = artistName, imageUri = imageUri) {
+            VibeIconButton(
+                icon = if (isPlaying) VibeIcons.Pause else VibeIcons.PlayFilled,
+                contentDescription = stringResource(if (isPlaying) R.string.pause_song else R.string.play_song, title),
+                onClick = onPlayPauseClick,
+                tint = MaterialTheme.colorScheme.primary,
+            )
+        }
+    }
+}
+
+/**
+ * The Queue sheet's upcoming song: tapping the row plays it, and the duration gives way to a drag
+ * handle. Like [EditableSongCard], [dragHandleModifier] carries the caller's reorder gesture.
+ */
+@Composable
+fun ReorderableSongCard(
+    title: String,
+    artistName: String?,
+    imageUri: String?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    dragHandleModifier: Modifier = Modifier,
+) {
+    VibeListItemRow(onClick = onClick, modifier = modifier) {
+        SongCardContent(title = title, artistName = artistName, imageUri = imageUri) {
+            DragHandle(title = title, modifier = dragHandleModifier)
+        }
+    }
+}
+
+@Composable
+private fun DragHandle(title: String, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier.size(DragHandleTouchTargetSize),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = VibeIcons.Menu,
+            contentDescription = stringResource(R.string.reorder_song, title),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(DragHandleIconSize),
+        )
+    }
+}
+
+/** Artwork and titles, shared so the cards can't drift apart; [trailing] closes the row. */
 @Composable
 private fun RowScope.SongCardContent(
     title: String,
@@ -245,5 +295,20 @@ private fun EditableSongCardPreview() {
             imageUri = null,
             onRemoveClick = {},
         )
+    }
+}
+
+@Preview
+@Composable
+private fun QueueSongCardsPreview() {
+    PreviewSurface {
+        NowPlayingSongCard(
+            title = "Midnight Drive",
+            artistName = "The Night Owls",
+            imageUri = null,
+            isPlaying = true,
+            onPlayPauseClick = {},
+        )
+        ReorderableSongCard(title = "Neon Rain", artistName = "Synthwave Co.", imageUri = null, onClick = {})
     }
 }

@@ -9,3 +9,10 @@ enum class RepeatMode {
     /** The current song loops when it ends; next and previous still move between songs. */
     One,
 }
+
+/** The mode a tap on the repeat button switches to: Off, All, One, then Off again. */
+fun RepeatMode.next(): RepeatMode = when (this) {
+    RepeatMode.Off -> RepeatMode.All
+    RepeatMode.All -> RepeatMode.One
+    RepeatMode.One -> RepeatMode.Off
+}

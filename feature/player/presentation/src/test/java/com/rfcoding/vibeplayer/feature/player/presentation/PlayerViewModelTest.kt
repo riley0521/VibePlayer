@@ -300,6 +300,27 @@ class PlayerViewModelTest {
     }
 
     @Test
+    fun `the queue button opens the queue sheet`() = runTest {
+        val viewModel = createViewModel()
+        playSecondSong()
+
+        viewModel.onAction(PlayerAction.OnQueueClick)
+
+        assertThat(viewModel.state.value.activeSheet).isEqualTo(PlayerSheet.Queue)
+    }
+
+    @Test
+    fun `create playlist does nothing unless the add-to-playlist sheet is open`() = runTest {
+        val viewModel = createViewModel()
+        playSecondSong()
+        viewModel.onAction(PlayerAction.OnQueueClick)
+
+        viewModel.onAction(PlayerAction.OnCreatePlaylistClick)
+
+        assertThat(viewModel.state.value.activeSheet).isEqualTo(PlayerSheet.Queue)
+    }
+
+    @Test
     fun `dismissing closes the sheet`() = runTest {
         val viewModel = createViewModel()
         playSecondSong()

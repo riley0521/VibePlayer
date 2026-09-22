@@ -18,15 +18,25 @@ import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionResult
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
+import com.rfcoding.vibeplayer.core.domain.player.PlaybackState
+import com.rfcoding.vibeplayer.core.domain.player.SleepTimer
+import com.rfcoding.vibeplayer.core.domain.player.originalOrderAfterMove
+import com.rfcoding.vibeplayer.core.domain.player.originalOrderAfterRemove
 import com.rfcoding.vibeplayer.core.domain.player.originalOrderQueue
 import com.rfcoding.vibeplayer.core.domain.player.shuffledQueue
 import com.rfcoding.vibeplayer.core.domain.song.SongLocalDataSource
 import com.rfcoding.vibeplayer.core.domain.util.onFailure
 import com.rfcoding.vibeplayer.core.player.PlaybackSessionContract.isShuffleOn
+import com.rfcoding.vibeplayer.core.player.PlaybackSessionContract.moveFrom
+import com.rfcoding.vibeplayer.core.player.PlaybackSessionContract.moveTo
+import com.rfcoding.vibeplayer.core.player.PlaybackSessionContract.removeIndex
+import com.rfcoding.vibeplayer.core.player.PlaybackSessionContract.sleepTimer
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -48,6 +58,9 @@ import org.koin.android.ext.android.inject
  * performed here for the Player screen too, so both always agree. Favourites stay in the database,
  * which the heart icon observes.
  *
+ * The Queue sheet's moves and removals and its sleep timer run here too. The timer lives only as long
+ * as the service: when it is due, the service pauses and stops itself, and the queue stays loaded.
+ *
  * Media3's default `onTaskRemoved` already stops the service when nothing is playing and keeps it
  * running while music plays.
  */
@@ -60,6 +73,10 @@ class PlaybackService : MediaSessionService() {
     private val isShuffleOn = MutableStateFlow(false)
 
     private var mediaSession: MediaSession? = null
+    private var exoPlayer: ExoPlayer? = null
+
+    private var sleepTimerJob: Job? = null
+    private var stopsAtEndOfTrack = false
 
     override fun onCreate() {
         super.onCreate()
@@ -73,6 +90,8 @@ class PlaybackService : MediaSessionService() {
             )
             .setHandleAudioBecomingNoisy(true)
             .build()
+        exoPlayer = player
+        player.addListener(EndOfTrackListener())
 
         val sessionBuilder = MediaSession.Builder(this, player).setCallback(SessionCallback())
         // :core:player can't see MainActivity, so the notification targets the app's launcher activity
@@ -108,6 +127,7 @@ class PlaybackService : MediaSessionService() {
             release()
         }
         mediaSession = null
+        exoPlayer = null
         super.onDestroy()
     }
 
@@ -162,6 +182,81 @@ class PlaybackService : MediaSessionService() {
         )
     }
 
+    private fun MediaSession.moveQueueItem(args: Bundle) {
+        val playback = player.toPlaybackState(player.readQueue(), sessionExtras)
+        val from = args.moveFrom()
+        val to = args.moveTo()
+        if (!playback.isUpcoming(from) || !playback.isUpcoming(to) || from == to) return
+        player.moveMediaItem(from, to)
+        setQueueInfo(
+            PlaybackSessionContract.queueInfoExtras(
+                playback.isShuffleOn,
+                playback.originalOrderAfterMove(from, to),
+                playback.isPlaylist,
+            ),
+        )
+    }
+
+    private fun MediaSession.removeQueueItem(args: Bundle) {
+        val playback = player.toPlaybackState(player.readQueue(), sessionExtras)
+        val index = args.removeIndex()
+        if (!playback.isUpcoming(index)) return
+        player.removeMediaItem(index)
+        setQueueInfo(
+            PlaybackSessionContract.queueInfoExtras(
+                playback.isShuffleOn,
+                playback.originalOrderAfterRemove(index),
+                playback.isPlaylist,
+            ),
+        )
+    }
+
+    /** Only songs after the current one can be moved or removed. */
+    private fun PlaybackState.isUpcoming(index: Int): Boolean =
+        currentIndex >= 0 && index in currentIndex + 1..queue.lastIndex
+
+    private fun setSleepTimer(timer: SleepTimer) {
+        clearSleepTimer()
+        when (timer) {
+            is SleepTimer.After -> sleepTimerJob = serviceScope.launch {
+                delay(timer.duration)
+                stopForSleep()
+            }
+            SleepTimer.EndOfTrack -> {
+                stopsAtEndOfTrack = true
+                exoPlayer?.pauseAtEndOfMediaItems = true
+            }
+        }
+    }
+
+    private fun clearSleepTimer() {
+        sleepTimerJob?.cancel()
+        sleepTimerJob = null
+        stopsAtEndOfTrack = false
+        exoPlayer?.pauseAtEndOfMediaItems = false
+    }
+
+    /** Pauses, drops the notification and stops the service; the queue stays loaded to resume from. */
+    @OptIn(UnstableApi::class)
+    private fun stopForSleep() {
+        clearSleepTimer()
+        pauseAllPlayersAndStopSelf()
+    }
+
+    /** With [SleepTimer.EndOfTrack], ExoPlayer pauses as the song ends; that pause is the cue to stop. */
+    private inner class EndOfTrackListener : Player.Listener {
+        override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+            if (stopsAtEndOfTrack && reason == Player.PLAY_WHEN_READY_CHANGE_REASON_END_OF_MEDIA_ITEM) {
+                stopForSleep()
+            }
+        }
+
+        override fun onPlaybackStateChanged(playbackState: Int) {
+            // The last song of a queue that doesn't repeat ends instead of pausing.
+            if (stopsAtEndOfTrack && playbackState == Player.STATE_ENDED) stopForSleep()
+        }
+    }
+
     private fun MediaSession.toggleFavorite() {
         val songId = player.currentMediaItem?.mediaId ?: return
         // The write must finish even if the service stops right after the tap.
@@ -178,6 +273,9 @@ class PlaybackService : MediaSessionService() {
             PlaybackSessionContract.SetQueueInfoCommand,
             PlaybackSessionContract.ToggleShuffleCommand,
             PlaybackSessionContract.ToggleFavoriteCommand,
+            PlaybackSessionContract.MoveQueueItemCommand,
+            PlaybackSessionContract.RemoveQueueItemCommand,
+            PlaybackSessionContract.SetSleepTimerCommand,
         )
 
         @OptIn(UnstableApi::class)
@@ -207,6 +305,9 @@ class PlaybackService : MediaSessionService() {
                 PlaybackSessionContract.SetQueueInfoCommand.customAction -> session.setQueueInfo(args)
                 PlaybackSessionContract.ToggleShuffleCommand.customAction -> session.toggleShuffle()
                 PlaybackSessionContract.ToggleFavoriteCommand.customAction -> session.toggleFavorite()
+                PlaybackSessionContract.MoveQueueItemCommand.customAction -> session.moveQueueItem(args)
+                PlaybackSessionContract.RemoveQueueItemCommand.customAction -> session.removeQueueItem(args)
+                PlaybackSessionContract.SetSleepTimerCommand.customAction -> args.sleepTimer()?.let(::setSleepTimer)
                 else -> return super.onCustomCommand(session, controller, customCommand, args)
             }
             return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))

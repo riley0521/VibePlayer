@@ -63,6 +63,59 @@ class QueueOrderTest {
         assertThat(playback.originalOrderQueue()).containsExactly(b, a, d, c)
     }
 
+    @Test
+    fun `with shuffle off a move becomes the original order`() {
+        val (a, b, c, d) = songs
+        val playback = PlaybackState(
+            queue = listOf(a, b, c, d),
+            currentIndex = 0,
+            originalOrder = listOf(a, b, c, d).map { it.id },
+        )
+
+        assertThat(playback.originalOrderAfterMove(from = 3, to = 1)).containsExactly("1", "4", "2", "3")
+    }
+
+    @Test
+    fun `with shuffle on a move leaves the original order alone`() {
+        val (a, b, c, d) = songs
+        val originalOrder = listOf(a, b, c, d).map { it.id }
+        val playback = PlaybackState(
+            queue = listOf(a, d, b, c),
+            currentIndex = 0,
+            isShuffleOn = true,
+            originalOrder = originalOrder,
+        )
+
+        assertThat(playback.originalOrderAfterMove(from = 3, to = 1)).isEqualTo(originalOrder)
+    }
+
+    @Test
+    fun `a move outside the queue leaves the original order alone`() {
+        val playback = PlaybackState(queue = songs.take(2), currentIndex = 0, originalOrder = listOf("1", "2"))
+
+        assertThat(playback.originalOrderAfterMove(from = 1, to = 5)).containsExactly("1", "2")
+    }
+
+    @Test
+    fun `a removed song leaves the original order`() {
+        val (a, b, c) = songs
+        val playback = PlaybackState(
+            queue = listOf(a, c, b),
+            currentIndex = 0,
+            isShuffleOn = true,
+            originalOrder = listOf(a, b, c).map { it.id },
+        )
+
+        assertThat(playback.originalOrderAfterRemove(index = 1)).containsExactly("1", "2")
+    }
+
+    @Test
+    fun `removing an index outside the queue leaves the original order alone`() {
+        val playback = PlaybackState(queue = songs.take(2), currentIndex = 0, originalOrder = listOf("1", "2"))
+
+        assertThat(playback.originalOrderAfterRemove(index = 4)).containsExactly("1", "2")
+    }
+
     private fun song(id: String) = Song(
         id = id,
         title = id,

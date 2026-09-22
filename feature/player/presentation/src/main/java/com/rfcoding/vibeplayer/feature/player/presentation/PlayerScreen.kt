@@ -50,6 +50,7 @@ import com.rfcoding.vibeplayer.core.presentation.playlistname.PlaylistNameMode
 import com.rfcoding.vibeplayer.core.presentation.playlistname.PlaylistNameSheetRoot
 import com.rfcoding.vibeplayer.core.presentation.toDurationText
 import com.rfcoding.vibeplayer.feature.player.presentation.addtoplaylist.AddToPlaylistSheetRoot
+import com.rfcoding.vibeplayer.feature.player.presentation.queue.QueueSheetRoot
 import com.rfcoding.vibeplayer.feature.player.presentation.sharecard.ShareCardSheet
 import org.koin.androidx.compose.koinViewModel
 import com.rfcoding.vibeplayer.core.presentation.R as PresentationR
@@ -118,6 +119,10 @@ fun PlayerRoot(
                 },
             )
         }
+    }
+
+    DialogSheetScopedViewModel(visible = state.activeSheet == PlayerSheet.Queue) {
+        QueueSheetRoot(onDismiss = onSheetDismiss)
     }
 
     (state.activeSheet as? PlayerSheet.ShareCard)?.let { sheet ->
@@ -357,14 +362,29 @@ private fun TransportControls(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // Both side groups share the leftover width equally, so Play stays centred even though
-            // the right side holds two buttons.
+            // Both side groups share the leftover width equally, so Play stays centred between them.
             Row(modifier = Modifier.weight(1f)) {
                 VibeIconButton(
                     icon = VibeIcons.Shuffle,
                     contentDescription = stringResource(R.string.shuffle),
                     onClick = { onAction(PlayerAction.OnShuffleClick) },
                     tint = if (state.isShuffleOn) colorScheme.primary else colorScheme.onSurfaceVariant,
+                    iconSize = 20.dp,
+                    containerColor = Color.Transparent,
+                )
+                VibeIconButton(
+                    icon = when (state.repeatMode) {
+                        RepeatMode.Off -> VibeIcons.RepeatOff
+                        RepeatMode.All -> VibeIcons.Repeat
+                        RepeatMode.One -> VibeIcons.RepeatOne
+                    },
+                    contentDescription = stringResource(R.string.repeat),
+                    onClick = { onAction(PlayerAction.OnRepeatClick) },
+                    tint = if (state.repeatMode == RepeatMode.Off) {
+                        colorScheme.onSurfaceVariant
+                    } else {
+                        colorScheme.primary
+                    },
                     iconSize = 20.dp,
                     containerColor = Color.Transparent,
                 )
@@ -402,18 +422,10 @@ private fun TransportControls(
                 horizontalArrangement = Arrangement.End,
             ) {
                 VibeIconButton(
-                    icon = when (state.repeatMode) {
-                        RepeatMode.Off -> VibeIcons.RepeatOff
-                        RepeatMode.All -> VibeIcons.Repeat
-                        RepeatMode.One -> VibeIcons.RepeatOne
-                    },
-                    contentDescription = stringResource(R.string.repeat),
-                    onClick = { onAction(PlayerAction.OnRepeatClick) },
-                    tint = if (state.repeatMode == RepeatMode.Off) {
-                        colorScheme.onSurfaceVariant
-                    } else {
-                        colorScheme.primary
-                    },
+                    icon = VibeIcons.Queue,
+                    contentDescription = stringResource(R.string.queue),
+                    onClick = { onAction(PlayerAction.OnQueueClick) },
+                    tint = colorScheme.onSurfaceVariant,
                     iconSize = 20.dp,
                     containerColor = Color.Transparent,
                 )

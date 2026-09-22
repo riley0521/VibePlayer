@@ -140,7 +140,7 @@ class AddSongsViewModelTest {
 
             assertThat(awaitItem()).isEqualTo(AddSongsEvent.SongsAdded)
         }
-        assertThat(playlistDataSource.addedSongIds[PLAYLIST_ID]!!).containsExactly("a", "c")
+        assertThat(playlistDataSource.addedSongIds[PLAYLIST_ID]!!).containsExactly("c", "a")
     }
 
     @Test

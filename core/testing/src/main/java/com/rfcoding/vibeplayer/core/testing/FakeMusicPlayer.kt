@@ -3,6 +3,7 @@ package com.rfcoding.vibeplayer.core.testing
 import com.rfcoding.vibeplayer.core.domain.player.MusicPlayer
 import com.rfcoding.vibeplayer.core.domain.player.PlaybackState
 import com.rfcoding.vibeplayer.core.domain.player.RepeatMode
+import com.rfcoding.vibeplayer.core.domain.player.SleepTimer
 import com.rfcoding.vibeplayer.core.domain.song.Song
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -19,6 +20,10 @@ class FakeMusicPlayer : MusicPlayer {
     var toggleShuffleCount = 0
     val repeatModes = mutableListOf<RepeatMode>()
     val seekPositions = mutableListOf<Long>()
+    /** The (from, to) of each [moveQueueItem] call. */
+    val movedQueueItems = mutableListOf<Pair<Int, Int>>()
+    val removedQueueIndices = mutableListOf<Int>()
+    val sleepTimers = mutableListOf<SleepTimer>()
 
     override suspend fun play(queue: List<Song>, isPlaylist: Boolean) {
         playedQueues += queue
@@ -51,5 +56,17 @@ class FakeMusicPlayer : MusicPlayer {
 
     override suspend fun toggleShuffle() {
         toggleShuffleCount++
+    }
+
+    override suspend fun moveQueueItem(from: Int, to: Int) {
+        movedQueueItems += from to to
+    }
+
+    override suspend fun removeQueueItem(index: Int) {
+        removedQueueIndices += index
+    }
+
+    override suspend fun setSleepTimer(timer: SleepTimer) {
+        sleepTimers += timer
     }
 }

@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rfcoding.vibeplayer.core.domain.image.ImageGallery
 import com.rfcoding.vibeplayer.core.domain.player.MusicPlayer
-import com.rfcoding.vibeplayer.core.domain.player.RepeatMode
+import com.rfcoding.vibeplayer.core.domain.player.next
 import com.rfcoding.vibeplayer.core.domain.playlist.PlaylistLocalDataSource
 import com.rfcoding.vibeplayer.core.domain.song.SongLocalDataSource
 import com.rfcoding.vibeplayer.core.domain.util.onFailure
@@ -78,13 +78,15 @@ class PlayerViewModel(
             PlayerAction.OnAddToPlaylistClick -> musicPlayer.playbackState.value.currentSong?.let { song ->
                 openSheet(PlayerSheet.AddToPlaylist(song.id))
             }
-            PlayerAction.OnCreatePlaylistClick -> _state.value.activeSheet?.let { sheet ->
+            PlayerAction.OnCreatePlaylistClick -> {
+                val sheet = _state.value.activeSheet as? PlayerSheet.AddToPlaylist ?: return
                 openSheet(PlayerSheet.CreatePlaylist(sheet.songId))
             }
             is PlayerAction.OnPlaylistCreated -> addToCreatedPlaylist(action.playlistId, action.name)
             PlayerAction.OnDownloadClick -> _state.value.song?.let { song ->
                 openSheet(PlayerSheet.ShareCard(song))
             }
+            PlayerAction.OnQueueClick -> openSheet(PlayerSheet.Queue)
             is PlayerAction.OnSaveCardClick -> saveCard(action.pngBytes)
             PlayerAction.OnStoragePermissionDenied -> viewModelScope.launch {
                 eventChannel.send(PlayerEvent.Error(UiText.StringResource(R.string.storage_permission_denied)))
@@ -156,12 +158,5 @@ class PlayerViewModel(
             songDataSource.setFavorite(songId, !isFavorite)
                 .onFailure { error -> eventChannel.send(PlayerEvent.Error(error.toUiText())) }
         }
-    }
-
-    /** Off → All → One → Off, the order the repeat button's icons follow. */
-    private fun RepeatMode.next(): RepeatMode = when (this) {
-        RepeatMode.Off -> RepeatMode.All
-        RepeatMode.All -> RepeatMode.One
-        RepeatMode.One -> RepeatMode.Off
     }
 }
