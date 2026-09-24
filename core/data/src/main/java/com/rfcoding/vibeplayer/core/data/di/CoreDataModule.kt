@@ -2,6 +2,7 @@ package com.rfcoding.vibeplayer.core.data.di
 
 import com.rfcoding.vibeplayer.core.data.image.MediaStoreImageGallery
 import com.rfcoding.vibeplayer.core.data.playlist.RoomPlaylistDataSource
+import com.rfcoding.vibeplayer.core.data.song.MusicFileReader
 import com.rfcoding.vibeplayer.core.data.song.RoomSongDataSource
 import com.rfcoding.vibeplayer.core.domain.image.ImageGallery
 import com.rfcoding.vibeplayer.core.domain.playlist.PlaylistLocalDataSource
@@ -15,4 +16,5 @@ val coreDataModule = module {
     singleOf(::RoomSongDataSource) { bind<SongLocalDataSource>() }
     single<PlaylistLocalDataSource> { RoomPlaylistDataSource(get()) }
     single<ImageGallery> { MediaStoreImageGallery(androidContext()) }
+    single { MusicFileReader(androidContext()) }
 }

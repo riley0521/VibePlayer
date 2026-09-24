@@ -3,11 +3,10 @@ package com.rfcoding.vibeplayer.feature.library.presentation.library
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rfcoding.vibeplayer.core.domain.player.MusicPlayer
-import com.rfcoding.vibeplayer.core.domain.player.PlaybackState
 import com.rfcoding.vibeplayer.core.domain.song.SongLocalDataSource
 import com.rfcoding.vibeplayer.core.domain.util.onFailure
 import com.rfcoding.vibeplayer.core.domain.util.onSuccess
-import com.rfcoding.vibeplayer.core.presentation.toSongUi
+import com.rfcoding.vibeplayer.core.presentation.toNowPlayingUi
 import com.rfcoding.vibeplayer.core.presentation.toUiText
 import com.rfcoding.vibeplayer.feature.library.domain.MusicLibraryRepository
 import com.rfcoding.vibeplayer.feature.library.domain.ScanFilters
@@ -115,14 +114,5 @@ class LibraryViewModel(
 
         delay(3.seconds)
         isVisibleScanRunning.value = false
-    }
-
-    private fun PlaybackState.toNowPlayingUi(): NowPlayingUi? = currentSong?.let { song ->
-        NowPlayingUi(
-            song = song.toSongUi(),
-            isPlaying = isPlaying,
-            positionMillis = positionMillis,
-            canSkipToPrevious = hasPrevious,
-        )
     }
 }

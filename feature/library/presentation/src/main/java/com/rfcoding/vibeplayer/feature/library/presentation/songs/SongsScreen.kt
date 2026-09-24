@@ -5,11 +5,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -27,6 +24,7 @@ import com.rfcoding.vibeplayer.core.designsystem.theme.VibePlayerTheme
 import com.rfcoding.vibeplayer.core.presentation.MiniPlayerHeight
 import com.rfcoding.vibeplayer.core.presentation.SongUi
 import com.rfcoding.vibeplayer.core.presentation.currentDeviceConfiguration
+import com.rfcoding.vibeplayer.core.presentation.rememberRemainingNavigationBarInset
 import com.rfcoding.vibeplayer.feature.library.presentation.components.PlayButton
 import com.rfcoding.vibeplayer.feature.library.presentation.components.ShuffleButton
 import com.rfcoding.vibeplayer.feature.library.presentation.components.SongCountText
@@ -61,10 +59,14 @@ internal fun SongsScreen(
     onAction: (SongsAction) -> Unit
 ) {
     val isMobile = currentDeviceConfiguration().isMobile
-    val bottomContentPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + MiniPlayerHeight
+    // Under the mobile bottom bar the navigation-bar inset is already taken, so only the rest counts.
+    val navigationBarInset = rememberRemainingNavigationBarInset()
+    val bottomContentPadding = navigationBarInset.bottom() + MiniPlayerHeight
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .then(navigationBarInset.modifier),
         state = listState,
         contentPadding = PaddingValues(
             start = if (isMobile) 16.dp else 24.dp,

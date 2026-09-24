@@ -1,5 +1,6 @@
 package com.rfcoding.vibeplayer.feature.library.presentation
 
+import androidx.compose.runtime.Composable
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
@@ -39,11 +40,13 @@ data class PlaylistDetailRoute(val playlistId: Long? = null)
 /**
  * Library → Scan music, Search, Playlist Page, Add songs and Edit playlist all stay inside this
  * feature, so the graph navigates on its own. Opening the player (from the mini player or a search
- * result) crosses into another feature, so `:app` handles [onOpenPlayer].
+ * result) crosses into another feature, so `:app` handles [onOpenPlayer]. [navigation] is the app's
+ * Library/Downloader switch, shown on the Library screen only.
  */
 fun NavGraphBuilder.libraryGraph(
     navController: NavController,
     onOpenPlayer: () -> Unit,
+    navigation: @Composable () -> Unit,
 ) {
     navigation<LibraryGraph>(startDestination = LibraryRoute) {
         composable<LibraryRoute> {
@@ -53,6 +56,7 @@ fun NavGraphBuilder.libraryGraph(
                 onPlaylistCreated = { playlistId -> navController.navigate(AddSongsRoute(playlistId)) },
                 onPlaylistClick = { playlistId -> navController.navigate(PlaylistDetailRoute(playlistId)) },
                 onMiniPlayerClick = onOpenPlayer,
+                navigation = navigation,
             )
         }
         composable<ScanMusicRoute> {

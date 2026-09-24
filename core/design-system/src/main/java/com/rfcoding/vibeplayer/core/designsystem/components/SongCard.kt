@@ -8,16 +8,21 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -146,6 +151,85 @@ fun ReorderableSongCard(
         SongCardContent(title = title, artistName = artistName, imageUri = imageUri) {
             DragHandle(title = title, modifier = dragHandleModifier)
         }
+    }
+}
+
+/** Where a [DownloadableSongCard]'s song stands; the card's trailing control follows it. */
+@Immutable
+sealed interface SongDownloadState {
+    data object NotDownloaded : SongDownloadState
+    data object Queued : SongDownloadState
+    data class Downloading(val progress: Float) : SongDownloadState
+    data object Downloaded : SongDownloadState
+}
+
+/**
+ * The Downloader's search result: the duration gives way to a download button, a progress ring
+ * while the song downloads, or a check once it's in the library. The row takes no click of its own.
+ */
+@Composable
+fun DownloadableSongCard(
+    title: String,
+    artistName: String?,
+    imageUri: String?,
+    downloadState: SongDownloadState,
+    onDownloadClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    VibeListItemRow(modifier = modifier) {
+        SongCardContent(title = title, artistName = artistName, imageUri = imageUri) {
+            when (downloadState) {
+                SongDownloadState.NotDownloaded -> VibeIconButton(
+                    icon = VibeIcons.Download,
+                    contentDescription = stringResource(R.string.download_song, title),
+                    onClick = onDownloadClick,
+                )
+                SongDownloadState.Queued -> DownloadStatusBox(
+                    contentDescription = stringResource(R.string.song_download_queued, title),
+                ) {
+                    VibeLoader(tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                is SongDownloadState.Downloading -> DownloadStatusBox(
+                    contentDescription = stringResource(R.string.song_downloading, title),
+                ) {
+                    CircularProgressIndicator(
+                        progress = { downloadState.progress },
+                        modifier = Modifier.size(20.dp),
+                        color = MaterialTheme.colorScheme.primary,
+                        strokeWidth = 4.dp,
+                        trackColor = MaterialTheme.colorScheme.outline,
+                        strokeCap = StrokeCap.Round,
+                        gapSize = 0.dp,
+                    )
+                }
+                SongDownloadState.Downloaded -> DownloadStatusBox(
+                    contentDescription = stringResource(R.string.song_downloaded, title),
+                ) {
+                    Icon(
+                        imageVector = VibeIcons.Check,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** Same 48dp footprint as the download button it replaces, so the row doesn't shift. */
+@Composable
+private fun DownloadStatusBox(
+    contentDescription: String,
+    content: @Composable () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .size(DragHandleTouchTargetSize)
+            .semantics { this.contentDescription = contentDescription },
+        contentAlignment = Alignment.Center,
+    ) {
+        content()
     }
 }
 
@@ -294,6 +378,41 @@ private fun EditableSongCardPreview() {
             artistName = null,
             imageUri = null,
             onRemoveClick = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun DownloadableSongCardPreview() {
+    PreviewSurface {
+        DownloadableSongCard(
+            title = "Midnight Drive",
+            artistName = "The Night Owls",
+            imageUri = null,
+            downloadState = SongDownloadState.NotDownloaded,
+            onDownloadClick = {},
+        )
+        DownloadableSongCard(
+            title = "Neon Rain",
+            artistName = "Synthwave Co.",
+            imageUri = null,
+            downloadState = SongDownloadState.Queued,
+            onDownloadClick = {},
+        )
+        DownloadableSongCard(
+            title = "Last Nite",
+            artistName = "The Strokes",
+            imageUri = null,
+            downloadState = SongDownloadState.Downloading(progress = 0.4f),
+            onDownloadClick = {},
+        )
+        DownloadableSongCard(
+            title = "Golden Hour",
+            artistName = null,
+            imageUri = null,
+            downloadState = SongDownloadState.Downloaded,
+            onDownloadClick = {},
         )
     }
 }

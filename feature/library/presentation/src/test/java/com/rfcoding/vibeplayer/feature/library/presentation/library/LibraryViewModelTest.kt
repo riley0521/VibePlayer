@@ -14,6 +14,7 @@ import com.rfcoding.vibeplayer.core.domain.player.PlaybackState
 import com.rfcoding.vibeplayer.core.domain.player.RepeatMode
 import com.rfcoding.vibeplayer.core.domain.util.DataError
 import com.rfcoding.vibeplayer.core.domain.util.Result
+import com.rfcoding.vibeplayer.core.presentation.NowPlayingUi
 import com.rfcoding.vibeplayer.core.presentation.UiText
 import com.rfcoding.vibeplayer.core.presentation.toSongUi
 import com.rfcoding.vibeplayer.core.testing.FakeMusicPlayer

@@ -8,6 +8,7 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -43,9 +44,12 @@ import com.rfcoding.vibeplayer.core.designsystem.components.VibeTabRow
 import com.rfcoding.vibeplayer.core.designsystem.components.bottomFade
 import com.rfcoding.vibeplayer.core.designsystem.icons.VibeIcons
 import com.rfcoding.vibeplayer.core.designsystem.theme.VibePlayerTheme
+import com.rfcoding.vibeplayer.core.presentation.MainNavigationLayout
 import com.rfcoding.vibeplayer.core.presentation.MiniPlayer
 import com.rfcoding.vibeplayer.core.presentation.MiniPlayerHeight
+import com.rfcoding.vibeplayer.core.presentation.NowPlayingUi
 import com.rfcoding.vibeplayer.core.presentation.ObserveAsEvents
+import com.rfcoding.vibeplayer.core.presentation.TabletMiniPlayerWidth
 import com.rfcoding.vibeplayer.core.presentation.currentDeviceConfiguration
 import com.rfcoding.vibeplayer.feature.library.presentation.R
 import com.rfcoding.vibeplayer.feature.library.presentation.playlist.PlaylistRoot
@@ -58,7 +62,6 @@ import org.koin.androidx.compose.koinViewModel
 
 private val MobileTopBarPadding = PaddingValues(start = 16.dp, end = 10.dp)
 private val TabletTopBarPadding = PaddingValues(start = 24.dp, end = 18.dp)
-private val TabletMiniPlayerWidth = 480.dp
 
 @Composable
 fun LibraryRoot(
@@ -67,6 +70,7 @@ fun LibraryRoot(
     onPlaylistCreated: (playlistId: Long) -> Unit,
     onPlaylistClick: (playlistId: Long?) -> Unit,
     onMiniPlayerClick: () -> Unit,
+    navigation: @Composable () -> Unit,
     viewModel: LibraryViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -99,6 +103,7 @@ fun LibraryRoot(
         },
         listState = listState,
         showScrollToTop = showScrollToTop,
+        navigation = navigation,
         songsTab = {
             SongsRoot(listState = listState)
         },
@@ -111,6 +116,10 @@ fun LibraryRoot(
     )
 }
 
+/**
+ * @param navigation the app's Library/Downloader switch: placed below the content on mobile and at
+ * the start on tablet.
+ */
 @Composable
 fun LibraryScreen(
     state: LibraryState,
@@ -118,6 +127,7 @@ fun LibraryScreen(
     listState: LazyListState,
     showScrollToTop: Boolean,
     modifier: Modifier = Modifier,
+    navigation: @Composable () -> Unit = {},
     songsTab: @Composable () -> Unit,
     playlistsTab: @Composable () -> Unit
 ) {
@@ -125,92 +135,96 @@ fun LibraryScreen(
     val coroutineScope = rememberCoroutineScope()
     val hasMiniPlayer = state.nowPlaying != null
 
-    Scaffold(
-        modifier = modifier,
-        containerColor = MaterialTheme.colorScheme.background,
-        // The mini player runs to the bottom edge and insets itself, so the content keeps no bottom inset.
-        contentWindowInsets = WindowInsets(0),
-        topBar = {
-            VibeMainTopBar(
-                contentPadding = if (isMobile) MobileTopBarPadding else TabletTopBarPadding,
-                actions = {
-                    VibeIconButton(
-                        icon = VibeIcons.Scan,
-                        contentDescription = stringResource(R.string.scan_music),
-                        onClick = { onAction(LibraryAction.OnScanClick) },
-                    )
-                    if (state.status == LibraryStatus.Loaded) {
+    MainNavigationLayout(navigation = navigation, modifier = modifier) { bottomBar ->
+        Scaffold(
+            containerColor = MaterialTheme.colorScheme.background,
+            // The mini player and the navigation bar inset themselves, so the content keeps no bottom inset.
+            contentWindowInsets = WindowInsets(0),
+            topBar = {
+                VibeMainTopBar(
+                    contentPadding = if (isMobile) MobileTopBarPadding else TabletTopBarPadding,
+                    actions = {
                         VibeIconButton(
-                            icon = VibeIcons.Search,
-                            contentDescription = stringResource(R.string.search_music),
-                            onClick = { onAction(LibraryAction.OnSearchClick) },
+                            icon = VibeIcons.Scan,
+                            contentDescription = stringResource(R.string.scan_music),
+                            onClick = { onAction(LibraryAction.OnScanClick) },
                         )
-                    }
-                },
-            )
-        },
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-        ) {
-            val centeredModifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-            when (state.status) {
-                LibraryStatus.Scanning -> ScanningContent(modifier = centeredModifier)
-                LibraryStatus.NoMusicFound -> NoMusicFoundContent(
-                    onScanAgainClick = { onAction(LibraryAction.OnScanAgainClick) },
-                    modifier = centeredModifier,
+                        if (state.status == LibraryStatus.Loaded) {
+                            VibeIconButton(
+                                icon = VibeIcons.Search,
+                                contentDescription = stringResource(R.string.search_music),
+                                onClick = { onAction(LibraryAction.OnSearchClick) },
+                            )
+                        }
+                    },
                 )
-                LibraryStatus.Loaded -> LoadedContent(
-                    state = state,
-                    onAction = onAction,
-                    isMobile = isMobile,
-                    // Figma's "Rectangle 5". It sits on the list only: the modifier paints over every
-                    // child of the node it's applied to, so the FAB and mini player must stay outside.
-                    modifier = Modifier.bottomFade(MaterialTheme.colorScheme.background),
-                    songsTab = songsTab,
-                    playlistsTab = playlistsTab
-                )
-            }
-
-            if (state.status == LibraryStatus.Loaded) {
-                AnimatedVisibility(
-                    visible = showScrollToTop && state.selectedTab == LibraryTab.Songs,
-                    enter = fadeIn() + scaleIn(),
-                    exit = fadeOut() + scaleOut(),
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .navigationBarsPadding()
-                        .padding(
-                            end = 12.dp,
-                            bottom = scrollToTopBottomPadding(isMobile, hasMiniPlayer),
-                        ),
-                ) {
-                    VibeFab(
-                        icon = VibeIcons.ArrowUp,
-                        contentDescription = stringResource(R.string.scroll_to_top),
-                        onClick = { coroutineScope.launch { listState.animateScrollToItem(0) } },
+            },
+            bottomBar = bottomBar,
+        ) { innerPadding ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    // The bottom bar already pads for the system navigation bar, so nothing below re-adds it.
+                    .consumeWindowInsets(innerPadding),
+            ) {
+                val centeredModifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+                when (state.status) {
+                    LibraryStatus.Scanning -> ScanningContent(modifier = centeredModifier)
+                    LibraryStatus.NoMusicFound -> NoMusicFoundContent(
+                        onScanAgainClick = { onAction(LibraryAction.OnScanAgainClick) },
+                        modifier = centeredModifier,
+                    )
+                    LibraryStatus.Loaded -> LoadedContent(
+                        state = state,
+                        onAction = onAction,
+                        isMobile = isMobile,
+                        // Figma's "Rectangle 5". It sits on the list only: the modifier paints over every
+                        // child of the node it's applied to, so the FAB and mini player must stay outside.
+                        modifier = Modifier.bottomFade(MaterialTheme.colorScheme.background),
+                        songsTab = songsTab,
+                        playlistsTab = playlistsTab
                     )
                 }
 
-                state.nowPlaying?.let { nowPlaying ->
-                    MiniPlayer(
-                        song = nowPlaying.song,
-                        isPlaying = nowPlaying.isPlaying,
-                        positionMillis = nowPlaying.positionMillis,
-                        canSkipToPrevious = nowPlaying.canSkipToPrevious,
-                        onClick = { onAction(LibraryAction.OnMiniPlayerClick) },
-                        onSkipToPreviousClick = { onAction(LibraryAction.OnSkipToPreviousClick) },
-                        onPlayPauseClick = { onAction(LibraryAction.OnPlayPauseClick) },
-                        onSkipNextClick = { onAction(LibraryAction.OnSkipNextClick) },
-                        onSeek = { onAction(LibraryAction.OnSeek(it)) },
+                if (state.status == LibraryStatus.Loaded) {
+                    AnimatedVisibility(
+                        visible = showScrollToTop && state.selectedTab == LibraryTab.Songs,
+                        enter = fadeIn() + scaleIn(),
+                        exit = fadeOut() + scaleOut(),
                         modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .widthIn(max = if (isMobile) Dp.Unspecified else TabletMiniPlayerWidth),
-                    )
+                            .align(Alignment.BottomEnd)
+                            .navigationBarsPadding()
+                            .padding(
+                                end = 12.dp,
+                                bottom = scrollToTopBottomPadding(isMobile, hasMiniPlayer),
+                            ),
+                    ) {
+                        VibeFab(
+                            icon = VibeIcons.ArrowUp,
+                            contentDescription = stringResource(R.string.scroll_to_top),
+                            onClick = { coroutineScope.launch { listState.animateScrollToItem(0) } },
+                        )
+                    }
+
+                    state.nowPlaying?.let { nowPlaying ->
+                        MiniPlayer(
+                            song = nowPlaying.song,
+                            isPlaying = nowPlaying.isPlaying,
+                            positionMillis = nowPlaying.positionMillis,
+                            canSkipToPrevious = nowPlaying.canSkipToPrevious,
+                            onClick = { onAction(LibraryAction.OnMiniPlayerClick) },
+                            onSkipToPreviousClick = { onAction(LibraryAction.OnSkipToPreviousClick) },
+                            onPlayPauseClick = { onAction(LibraryAction.OnPlayPauseClick) },
+                            onSkipNextClick = { onAction(LibraryAction.OnSkipNextClick) },
+                            onSeek = { onAction(LibraryAction.OnSeek(it)) },
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .widthIn(max = if (isMobile) Dp.Unspecified else TabletMiniPlayerWidth),
+                        )
+                    }
                 }
             }
         }

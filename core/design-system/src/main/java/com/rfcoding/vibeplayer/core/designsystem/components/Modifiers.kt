@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 
 /** Height of Figma's bottom fade ("Rectangle 5") that eases a scrolling list into the background. */
@@ -36,6 +37,34 @@ internal fun Modifier.bottomBorder(color: Color, width: Dp = 1.dp): Modifier = d
         color = color,
         start = Offset(0f, y),
         end = Offset(size.width, y),
+        strokeWidth = strokeWidth,
+    )
+}
+
+/** A [width] line along the top edge, e.g. the navigation bar's divider. */
+internal fun Modifier.topBorder(color: Color, width: Dp = 1.dp): Modifier = drawBehind {
+    val strokeWidth = width.toPx()
+    val y = strokeWidth / 2
+    drawLine(
+        color = color,
+        start = Offset(0f, y),
+        end = Offset(size.width, y),
+        strokeWidth = strokeWidth,
+    )
+}
+
+/** A [width] line along the end edge, e.g. the navigation rail's divider. */
+internal fun Modifier.endBorder(color: Color, width: Dp = 1.dp): Modifier = drawBehind {
+    val strokeWidth = width.toPx()
+    val x = if (layoutDirection == LayoutDirection.Ltr) {
+        size.width - strokeWidth / 2
+    } else {
+        strokeWidth / 2
+    }
+    drawLine(
+        color = color,
+        start = Offset(x, 0f),
+        end = Offset(x, size.height),
         strokeWidth = strokeWidth,
     )
 }

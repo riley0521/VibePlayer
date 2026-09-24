@@ -2,18 +2,17 @@ package com.rfcoding.vibeplayer.feature.library.data.scanner
 
 import android.content.ContentUris
 import android.content.Context
-import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
+import com.rfcoding.vibeplayer.core.data.song.MusicFileReader
 import com.rfcoding.vibeplayer.core.domain.util.DataError
 import com.rfcoding.vibeplayer.core.domain.util.Result
 import com.rfcoding.vibeplayer.feature.library.domain.MusicScanner
 import com.rfcoding.vibeplayer.feature.library.domain.SCAN_BATCH_SIZE
 import com.rfcoding.vibeplayer.feature.library.domain.ScanFilters
 import com.rfcoding.vibeplayer.feature.library.domain.ScannedSong
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -27,19 +26,18 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.io.File
-import java.io.IOException
 
 /**
  * Finds `.mp3` files directly inside `Music/` through MediaStore and reads their tags with
- * [MediaMetadataRetriever]. Embedded cover art is copied to `filesDir/artwork/<MediaStore id>`.
+ * [MusicFileReader], which copies embedded cover art to `filesDir/artwork/<MediaStore id>`.
  */
 class MediaStoreMusicScanner(
     private val context: Context,
+    private val musicFileReader: MusicFileReader,
     private val applicationScope: CoroutineScope
 ) : MusicScanner {
 
-    private val artworkDir = File(context.filesDir, ARTWORK_DIR_NAME)
+    private val artworkDir = musicFileReader.artworkDir
     private val seenKeysMutex = Mutex()
 
     override fun scan(filters: ScanFilters): Flow<Result<List<ScannedSong>, DataError.Local>> = flow {
@@ -148,73 +146,24 @@ class MediaStoreMusicScanner(
         filters: ScanFilters,
         seenKeys: MutableSet<Pair<String, String?>>,
     ): ScannedSong? {
-        val retriever = MediaMetadataRetriever()
-        return try {
-            retriever.setDataSource(context, file.uri)
-            currentCoroutineContext().ensureActive()
+        val read = musicFileReader.read(file.uri, file.mediaId) { tags ->
+            filters.acceptsDuration(tags.durationMillis) &&
+                seenKeysMutex.withLock { seenKeys.add(tags.title to tags.artistName) }
+        } ?: return null
 
-            val title = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
-                ?.trim()
-                ?.takeIf { it.isNotEmpty() }
-            if (title == null) return null
-
-            val artistName = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST)
-                ?.trim()
-                ?.takeIf { it.isNotEmpty() }
-
-            val durationMillis = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
-                ?.toLongOrNull()
-            if (durationMillis == null || !filters.acceptsDuration(durationMillis)) return null
-
-            val isAlreadyAdded = seenKeysMutex.withLock {
-                !seenKeys.add(title to artistName)
-            }
-            if (isAlreadyAdded) {
-                return null
-            }
-
-            val picture = retriever.embeddedPicture
-
-            ScannedSong(
-                title = title,
-                artistName = artistName,
-                fileUri = file.uri.toString(),
-                imageUri = picture?.let { saveArtwork(file, it) },
-                durationMillis = durationMillis,
-            )
-        } catch (e: CancellationException) {
-            // CancellationException is a RuntimeException, so it must escape the catch below.
-            throw e
-        } catch (_: RuntimeException) {
-            // A corrupt or unsupported file; skip it and keep scanning.
-            null
-        } finally {
-            retriever.release()
-        }
-    }
-
-    /** Returns the artwork's file URI, or null when it couldn't be written. */
-    private fun saveArtwork(file: MusicFile, bytes: ByteArray): String? {
-        val artworkFile = File(artworkDir, file.artworkFileName)
-        return try {
-            // Same length is a cheap "unchanged" check that spares a rewrite on every rescan.
-            if (!artworkFile.exists() || artworkFile.length() != bytes.size.toLong()) {
-                artworkFile.writeBytes(bytes)
-            }
-            Uri.fromFile(artworkFile).toString()
-        } catch (_: IOException) {
-            null
-        }
+        return ScannedSong(
+            title = read.tags.title,
+            artistName = read.tags.artistName,
+            fileUri = read.fileUri,
+            imageUri = read.imageUri,
+            durationMillis = read.tags.durationMillis,
+        )
     }
 
     private data class MusicFile(
         val mediaId: Long,
         val uri: Uri,
     ) {
-        val artworkFileName: String get() = mediaId.toString()
-    }
-
-    private companion object {
-        const val ARTWORK_DIR_NAME = "artwork"
+        val artworkFileName: String get() = MusicFileReader.artworkFileName(mediaId)
     }
 }

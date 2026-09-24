@@ -44,3 +44,7 @@ include(":feature:library:data")
 include(":feature:library:presentation")
 
 include(":feature:player:presentation")
+
+include(":feature:downloader:domain")
+include(":feature:downloader:data")
+include(":feature:downloader:presentation")

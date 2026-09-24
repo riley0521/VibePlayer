@@ -8,6 +8,18 @@ plugins {
 android {
     namespace = "com.rfcoding.vibeplayer"
 
+    defaultConfig {
+        // yt-dlp ships Python and FFmpeg per ABI; phones are arm64 and emulators x86_64.
+        ndk {
+            abiFilters += listOf("arm64-v8a", "x86_64")
+        }
+    }
+
+    packaging {
+        // youtubedl-android runs its binaries from the extracted native library folder.
+        jniLibs.useLegacyPackaging = true
+    }
+
     buildTypes {
         release {
             optimization {
@@ -32,6 +44,9 @@ dependencies {
     implementation(projects.feature.library.data)
     implementation(projects.feature.library.presentation)
     implementation(projects.feature.player.presentation)
+    implementation(projects.feature.downloader.domain)
+    implementation(projects.feature.downloader.data)
+    implementation(projects.feature.downloader.presentation)
 
     // AndroidX
     implementation(libs.androidx.core.ktx)
@@ -39,4 +54,5 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.koin.androidx.workmanager)
 }

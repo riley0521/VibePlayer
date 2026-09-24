@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="download_channel_name">Downloads</string>
+    <string name="download_channel_description">Progress of the songs being downloaded</string>
+    <string name="download_notification_preparing">Preparing download…</string>
+    <string name="download_notification_remaining">%1$d more waiting</string>
+</resources>

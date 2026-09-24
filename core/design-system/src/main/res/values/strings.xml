@@ -8,4 +8,8 @@
     <string name="reorder_song">Reorder %1$s</string>
     <string name="play_song">Play %1$s</string>
     <string name="pause_song">Pause %1$s</string>
+    <string name="download_song">Download %1$s</string>
+    <string name="song_download_queued">%1$s is waiting to download</string>
+    <string name="song_downloading">Downloading %1$s</string>
+    <string name="song_downloaded">%1$s is downloaded</string>
 </resources>

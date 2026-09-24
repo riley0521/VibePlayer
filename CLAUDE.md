@@ -1,6 +1,6 @@
 # VibePlayer
 
-An Android music player that runs entirely offline (Kotlin, Jetpack Compose, Material 3). It scans the device's `Music/` folder, stores songs and playlists in Room, and plays audio through Media3. The app never uses the network. `minSdk 28`, `compileSdk`/`targetSdk 37`, package `com.rfcoding.vibeplayer`.
+An Android music player that runs offline (Kotlin, Jetpack Compose, Material 3). It scans the device's `Music/` folder, stores songs and playlists in Room, and plays audio through Media3. The only part of the app that uses the network is the Downloader tab (`:feature:downloader`), which saves YouTube audio into `Music/`. `minSdk 28`, `compileSdk`/`targetSdk 37`, package `com.rfcoding.vibeplayer`.
 
 > **Current state:** every module under "Target module layout" exists and is wired into `:app`, but most contain no code yet. The UI, however, is done: all screens and all design-system components are already implemented, so there is no need to open Figma unless the user asks for it. Build config lives in `:build-logic` convention plugins, applied as `alias(libs.plugins.vibeplayer.<name>)`:
 > `android.application`, `android.library`, `android.feature` (library + Compose + Koin + serialization, plus `:core:domain`, `:core:presentation`, `:core:design-system`, navigation and lifecycle-compose), `android.instrumented-testing` (opt-in: the AndroidJUnit runner plus androidx.test and `room-testing` on `androidTestImplementation`), `domain.module` (pure Kotlin; its `testDebugUnitTest` task aliases `test`), `compose`, `koin`, `room` and `kotlinx.serialization`.
@@ -55,17 +55,22 @@ manual check of the UI belong to the user, and CI's `instrumentation-tests` job 
                                    main screen (songs + playlist tabs), playlist page, search, scan music,
                                    add-songs screen; MediaStore scanner, scan filters
 :feature:player:presentation       full player screen, add-to-playlist, favorite toggle
+:feature:downloader:{domain,data,presentation}
+                                   Downloader tab: paste a YouTube video/playlist link, download songs as MP3 into
+                                   Music/ and the library; yt-dlp (youtubedl-android), WorkManager queue, DownloadError
 ```
 
 - Both `library` and `player` use songs and playlists, so their models and interfaces live in `:core:domain`, with implementations in `:core:data`. Logic only the library needs stays in `:feature:library:*`.
 - Features never depend on each other. Navigation between features goes through callbacks wired up in `:app`.
+- Library and Downloader are the two top-level tabs. `:app` builds the switch (`MainNavigation`: a bottom bar on mobile, a rail on tablet) and passes it into both graphs as a slot, which each screen places with `MainNavigationLayout` from `:core:presentation`.
 
 ## Domain rules (already decided; don't reopen them)
 
-- **Offline only.** No Ktor, no tokens, no `HttpClient`/`safeCall`: skip those parts of the data-layer and error-handling skills. `DataError.Local` is the only data error.
+- **Offline, except the downloader.** Only `:feature:downloader` may touch the network (it declares `INTERNET`), and only through yt-dlp. No Ktor, no tokens, no `HttpClient`/`safeCall` anywhere: skip those parts of the data-layer and error-handling skills. `DataError.Local` stays the only core data error; the downloader's failures are its own `DownloadError`.
 - **Permission**: `READ_MEDIA_AUDIO` on API 33+, `READ_EXTERNAL_STORAGE` on API 32 and below. Show the permission screen until it's granted.
 - **Scanning**: only `.mp3` files **directly inside** the device's `Music/` folder count; subfolders are ignored. Read metadata with `MediaMetadataRetriever`. Store `fileUri` as a string, never the file contents.
-- **Song ID = file name** (e.g. `song.mp3`). Rescans upsert by this ID.
+- **Song ID** is a UUID. Scans and downloads upsert by `(title, artistName)`, which keeps the ID, `isFavorite` and playlist links of a song already stored.
+- **Downloads** are MP3 with the cropped-square thumbnail and title/artist tags embedded, named `[title].mp3` (`[title] - [artist].mp3`, then `[title] (n).mp3` on a clash), written to `Music/`, then read with the shared `MusicFileReader` and upserted without the scan filters. A track counts as already downloaded when a song with the same title and artist (trimmed, case-insensitive) is in the library.
 - **Rescan = upsert + prune**, in one DAO `@Transaction`:
   - upsert every file that passes the filters, keeping `isFavorite` and playlist links;
   - delete rows whose file is gone or no longer passes the filters.

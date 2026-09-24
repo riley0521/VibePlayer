@@ -1,7 +1,7 @@
 package com.rfcoding.vibeplayer.feature.library.presentation.library
 
 import androidx.compose.runtime.Stable
-import com.rfcoding.vibeplayer.core.presentation.SongUi
+import com.rfcoding.vibeplayer.core.presentation.NowPlayingUi
 
 @Stable
 data class LibraryState(
@@ -20,11 +20,3 @@ enum class LibraryTab {
     Songs,
     Playlist,
 }
-
-data class NowPlayingUi(
-    val song: SongUi,
-    val isPlaying: Boolean = false,
-    val positionMillis: Long = 0,
-    /** False on the first song of the list, which hides the mini player's previous button. */
-    val canSkipToPrevious: Boolean = false,
-)

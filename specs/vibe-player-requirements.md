@@ -1,7 +1,7 @@
 # VibePlayer - A music player app - Requirements
 
 ## Purpose
-A native Android application that plays music offline, scans your music folder. Purely local data and does not need internet.
+A native Android application that plays music offline, scans your music folder. Purely local data; the only feature that needs internet is the Downloader tab, which downloads YouTube audio into the music folder.
 
 ---
 
@@ -34,7 +34,7 @@ Note: Mobile layouts layers have the same name to Tablet layouts for easy lookup
 ### 1. Permission Screen
 - This will be shown if the user did not grant the access storage permission, we will only check the music folder
 - When user click 'Allow Access' button, request the permission
-- This permission is critical that needs to be granted because our app is offline and depends on the music folder access.
+- This permission is critical that needs to be granted because the app depends on the music folder access.
 
 ### 2. Main Screen
 
@@ -84,6 +84,16 @@ Note: Mobile layouts layers have the same name to Tablet layouts for easy lookup
 
 ### 7. Add songs screen (Figma layer name: Add songs to playlist page - None selected / Add songs to playlist page - Some music selected / Add songs to playlist page - Search result)
 - Make the item selectable with the check mark, show the 'OK' button when there are selected music items, clicking it will add to playlist and then close this page.
+
+### 8. Downloader screen (no Figma design; built from the existing components)
+Full description: `specs/music-downloader-feature.md`.
+- Library and Downloader are switched with a bottom navigation bar on mobile and a navigation rail on tablet.
+- Paste a YouTube video or playlist link (or tap Paste), then Find. The results show as song cards with the thumbnail, title and artist.
+- A song whose title and artist are already in the library shows a check; otherwise a download button, and a progress ring while it is queued or downloading.
+- With more than one result, a "Download all" FAB queues every song not downloaded yet.
+- Downloads run one at a time in the background with a progress notification, and continue when the app is left.
+- Each file is an MP3 in `Music/` named `[title].mp3`, with a square-cropped thumbnail and the title and artist embedded, and is added to the library as soon as it finishes.
+- The mini player shows here too.
 
 ---
 

@@ -8,11 +8,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -41,6 +38,7 @@ import com.rfcoding.vibeplayer.core.presentation.ObserveAsEvents
 import com.rfcoding.vibeplayer.core.presentation.PlaylistUi
 import com.rfcoding.vibeplayer.core.presentation.currentDeviceConfiguration
 import com.rfcoding.vibeplayer.core.presentation.playlistname.PlaylistNameSheetRoot
+import com.rfcoding.vibeplayer.core.presentation.rememberRemainingNavigationBarInset
 import com.rfcoding.vibeplayer.feature.library.presentation.R
 import org.koin.androidx.compose.koinViewModel
 import com.rfcoding.vibeplayer.core.presentation.R as PresentationR
@@ -146,10 +144,14 @@ internal fun PlaylistScreen(
         start = cardPadding,
         end = if (isMobile) 12.dp else 20.dp,
     )
-    val bottomContentPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + MiniPlayerHeight
+    // Under the mobile bottom bar the navigation-bar inset is already taken, so only the rest counts.
+    val navigationBarInset = rememberRemainingNavigationBarInset()
+    val bottomContentPadding = navigationBarInset.bottom() + MiniPlayerHeight
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .then(navigationBarInset.modifier),
         state = listState,
         contentPadding = PaddingValues(bottom = bottomContentPadding),
     ) {

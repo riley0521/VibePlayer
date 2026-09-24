@@ -39,6 +39,9 @@ private val MiniPlayerShadowColor = Color(0x4D0A131D)
 /** The height Figma gives the card, which callers use to inset whatever scrolls behind it. */
 val MiniPlayerHeight = 112.dp
 
+/** On a tablet the mini player keeps to this width, centered at the bottom. */
+val TabletMiniPlayerWidth = 480.dp
+
 /**
  * Figma "Main Page - Songs Tab - Mini player". Docked to the bottom edge: full width on mobile,
  * a 480dp card centred on tablets (the caller constrains it through [modifier]).
